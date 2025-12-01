@@ -1,0 +1,7 @@
+baseURL = 'https://scriptedvestige.com'
+languageCode = 'en-us'
+title = 'ScriptedVestige'
+theme = 'PaperMod'
+
+[params]
+defaultTheme = 'dark'
