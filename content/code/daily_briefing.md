@@ -12,7 +12,6 @@ showToc: "true"
 comments: "false"
 searchHidden: "false"
 ---
-# Daily Briefing
 This project started with wanting a way to keep up with cybersecurity news.  I started the project with a simple, hard-coded script that let me scrape the RSS feed of one news source.  I got distracted with other things and came back to this project months later, but I didn't forget about the project.  While I was busy with other things, I had ideas to make this project better, and I've implemented those.
 
 This project will likely never actually be complete, but it's at a good spot where it's stable and has been doing what I designed it to do and is making my life easier.

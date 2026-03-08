@@ -13,8 +13,6 @@ showToc: "true"
 comments: "false"
 searchHidden: "false"
 ---
-
-# Network Backbone: Setup and Migration
 To start my home lab journey, I decided to rebuild my network from scratch with some equipment that would allow me a bit more control than most consumer grade stuff.  I thought that would be a good place to start as it supports a lot of the things I'll be doing down the road.
 ### Hardware
 I went with all Ubiquiti gear for ease of use as far as pushing changes is concerned.  I've got one control plane, and any changes are automatically applied to whatever device needs the changes applied.  

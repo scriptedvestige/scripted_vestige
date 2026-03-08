@@ -12,8 +12,6 @@ showToc: "true"
 comments: "false"
 searchHidden: "false"
 ---
-
-# TrueNAS Resurrection
 I built a custom box to run TrueNAS a while ago but took it offline because I wasn’t really using it. Now, I’ve got a reason to bring it back online: hosting services for my yard and irrigation project. The original setup was rushed, so I wanted a plan to safely bring it back online on the new network backbone.
 
 This article mentions some IP mismatch issues, I cover that in my [Network Backbone post](/infrastructure/network_backbone).
