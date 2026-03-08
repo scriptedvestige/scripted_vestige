@@ -1,0 +1,82 @@
+baseURL: "https://scriptedvestige.com"
+languageCode: "en-us"
+title: "ScriptedVestige"
+theme: "PaperMod"
+paginate: 10
+
+enableRobotsTXT: true
+buildDrafts: false
+buildFuture: false
+
+# Search support
+outputs:
+  home:
+    - HTML
+    - RSS
+
+params:
+  env: production
+  title: "ScriptedVestige"
+  description: "ScriptedVestige home lab projects covering networking, infrastructure, code, and more."
+  author: "ScriptedVestige"
+  defaultTheme: dark
+  disableThemeToggle: false
+
+  # Home page layout
+  homeInfoParams:
+    Title: "Welcome to ScriptedVestige!"
+    Content: >
+      I'm an IT guy documenting my home lab which covers networking, infrastructure, automation, and everything in between.  This is a living record of things I've built, broken, and fixed.
+      <br><br>
+      Have a question or want to get in touch?  Reach me at [contact@scriptedvestige.com](mailto:contact@scriptedvestige.com)!
+
+  socialIcons:
+    - name: github
+      url: "https://github.com/scriptedvestige"
+
+  # Search
+  fuseOpts:
+    isCaseSensitive: false
+    shouldSort: true
+    location: 0
+    distance: 1000
+    threshold: 0.4
+    minMatchCharLength: 2
+    keys:
+      - title
+      - permalink
+      - summary
+      - content
+
+  # Post settings
+  showReadingTime: true
+  showShareButtons: false
+  showPostNavLinks: true
+  showBreadCrumbs: true
+  showCopyCodeButtons: true
+  showToc: true
+  tocOpen: false
+
+  # Taxonomies (tagging)
+  taxonomies:
+    tag: tags
+    categories: categories
+
+# Nav menu
+menu:
+  main:
+    - name: Infrastructure
+      url: /infrastructure/
+      weight: 10
+    - name: Code
+      url: /code/
+      weight: 20
+    - name: Data Analysis
+      url: /data_analysis/
+      weight: 30
+    - name: Troubleshooting
+      url: /troubleshooting/
+      weight: 40
+    - name: Tags
+      url: /tags/
+      weight: 50
