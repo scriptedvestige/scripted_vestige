@@ -6,8 +6,22 @@
     <description>Recent content in Infrastructure on ScriptedVestige</description>
     <generator>Hugo -- 0.157.0</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 02 Jan 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 09 Jan 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="http://localhost:1313/categories/infrastructure/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Portainer &amp; TimescaleDB</title>
+      <link>http://localhost:1313/infrastructure/timescaledb/</link>
+      <pubDate>Fri, 09 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/infrastructure/timescaledb/</guid>
+      <description>Setting up my database.</description>
+    </item>
+    <item>
+      <title>TrueNAS Configuration</title>
+      <link>http://localhost:1313/infrastructure/truenas_config/</link>
+      <pubDate>Fri, 09 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/infrastructure/truenas_config/</guid>
+      <description>Configuration of datasets within the storage pool.</description>
+    </item>
     <item>
       <title>TrueNAS Resurrection</title>
       <link>http://localhost:1313/infrastructure/truenas_resurrection/</link>

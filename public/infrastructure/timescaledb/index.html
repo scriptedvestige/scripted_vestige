@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto" data-theme="dark">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Portainer &amp; TimescaleDB | ScriptedVestige</title>
+<meta name="keywords" content="TrueNAS, data, timescale, portainer, bash, cron, python">
+<meta name="description" content="Setting up my database.">
+<meta name="author" content="ScriptedVestige">
+<link rel="canonical" href="http://localhost:1313/infrastructure/timescaledb/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.a29c24210eb31d9ce56f669c66a35c9c51b17376b7764e336a49af7dec914cf0.css" integrity="sha256-opwkIQ6zHZzlb2acZqNcnFGxc3a3dk4zakmvfeyRTPA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/infrastructure/timescaledb/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><meta property="og:url" content="http://localhost:1313/infrastructure/timescaledb/">
+  <meta property="og:site_name" content="ScriptedVestige">
+  <meta property="og:title" content="Portainer & TimescaleDB">
+  <meta property="og:description" content="Setting up my database.">
+  <meta property="og:locale" content="en-us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="infrastructure">
+    <meta property="article:published_time" content="2026-01-09T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-01-09T00:00:00+00:00">
+    <meta property="article:tag" content="TrueNAS">
+    <meta property="article:tag" content="Data">
+    <meta property="article:tag" content="Timescale">
+    <meta property="article:tag" content="Portainer">
+    <meta property="article:tag" content="Bash">
+    <meta property="article:tag" content="Cron">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Portainer &amp; TimescaleDB">
+<meta name="twitter:description" content="Setting up my database.">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Infrastructure",
+      "item": "http://localhost:1313/infrastructure/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Portainer \u0026 TimescaleDB",
+      "item": "http://localhost:1313/infrastructure/timescaledb/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Portainer \u0026 TimescaleDB",
+  "name": "Portainer \u0026 TimescaleDB",
+  "description": "Setting up my database.",
+  "keywords": [
+    "TrueNAS", "data", "timescale", "portainer", "bash", "cron", "python"
+  ],
+  "articleBody": "I’m going to run TimescaleDB in Portainer to host my weather database for my yard and irrigation project. I decided to use Portainer just because it’s easier to use than the Docker CLI, in my opinion. Portainer is available as a native app within TrueNAS as well, so everything will be nice and smooth.\nTimescaleDB was my choice over vanilla PostgreSQL or other options because it’s great for time series data, which is what I’ll be dealing with in the weather data. It automatically creates chunks within what are called hypertables, which allows you to manage large quantities of data in a time series easily and offers features like continuous aggregates, which will be very useful for what I’ll be doing.\nI’ve done some building and testing of my scrapers that grab weather forecast data from the National Weather Service. Those were saving to a local test database on my laptop while I was building. Once the database is set up on the NAS, I’ll point the scrapers to the new database and set cron jobs to fire four times per day for the forecast scrapers, and once per hour for the severe weather alert scraper.\nPortainer Install I’ll start by selecting the Apps tab in the TrueNAS GUI, click Discover Apps, then find the Portainer app. I need to set up a pool to install, so I’ll select my mainpool.\nI’m going to leave all the defaults selected on the Portainer configuration, except I’m going to select Host Path for Portainer Storage and select /mnt/mainpool, click the Create Dataset option, then enter “portainer”, then I’ll click Install. Selecting a Host Path for the storage means the data will be stored directly on the NAS in the selected dataset, not within the app. This dataset will hold the data related to Portainer. I should have set up the dataset beforehand, but this way works as well.\nAfter the app is installed, I need to start the app, and then on the right I’ll click the HTTPS button and see what pops up. Nothing. The app is starting but then immediately crashes. After doing some troubleshooting, I find that the issue is because the owner of the dataset is root, it needs to be apps. This is why it’s better to create the dataset and give it the appropriate owner before installing and configuring the app. When creating the dataset from the app configuration, it defaulted to giving root the dataset ownership. I’ll modify the permissions to have apps as the owner, and now it starts and stays up as expected and I’ve got access.\nI land at a page that prompts me to create an admin username and password. Once I do that, I’m in.\nNow, what’s interesting here is that TrueNAS Applications are just Docker containers. So when I add applications through TrueNAS, they appear in Portainer as well. This snip was taken more recently than the work in this writeup, so you can see any container that starts with “ix-*” is an Application installed through the TrueNAS Application GUI.\nTimescaleDB Install Now I’ll grab the TimescaleDB Docker image. I’ll select the local environment in Portainer and I can see a Portainer container in the containers tab. I’ll create a new container in Portainer and name it timescaleDB. I’ll go to DockerHub and see what the latest image is. It looks like timescale/timescaledb:latest-pg17 is the most recent, so I’ll enter that in the Image field in Portainer. I’m going to map the ports on the host 5432 to container 5432. In the advanced options, I’ll mount the container volume to the dataset by using /var/lib/postgresql/data, selecting bind, then using path /mnt/mainpool/db_data. This will give me persistent storage on the NAS which should survive container restarts and updates. I’ll then need to create some environment variables for username, password, and database name. Those will be POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB, respectively. I’ll change the restart policy to Always. And now I’ll deploy.\nI’ve already got psql on my laptop from earlier scraper work, so I’ll start that up, and once I give the proper information, I’m in. Very good! I can run “select version();” and “\\dx” commands to see that I’ve got the right version I selected and that the Timescale extension is installed. Now I’ll take my saved SQL statements from my testing and create my tables. I’ve copied and pasted my create table commands setting the schema for my three tables I have so far. Now I’ll convert each table to a hypertable for Timescale magic.\nselect create_hypertable('home_forecast', 'starttime', if_not_exists =\u003e TRUE); select create_hypertable('work_forecast', 'starttime', if_not_exists =\u003e TRUE); select create_hypertable('alerts', 'onset', if_not_exists =\u003e TRUE); The commands below will confirm that my tables were created with the intended schema and that they were successfully converted to hypertables.\n\\d+ [tablename] select * from timescaledb_information.hypertables; I’ll have more tables to set up when I deploy my weather station and other sensors in the yard, but those are stories for another day.\nThis snip was taken long after the initial setup of the database, so you can see many tables and views. Don’t worry, I’ll have future posts covering all of that!\nSetting the scrapers up The next move is to copy my NWS scraper modules to the Pi that is currently running my daily briefing. I’ll do that, then update the config file with my new TimescaleDB data, then do a manual run to test hitting the API and inserting into the appropriate database tables.\nI’m going to use SCP to copy all of the project files from my laptop to the Pi. Another way to do this would be to push to a GitHub repo with the laptop, then pull from the repo with the Pi, either way works. I want to use the -r option with SCP to copy the entire directory and subdirectories recursively in one shot.\nI made a mistake here because I copied my venv from my Windows laptop to the Pi, which isn’t going to work on the Pi. I’ll need to delete that, then create a new venv and install my packages from requirements.txt. Now I’m ready to test.\nI’ve tried a manual run, and my log shows that the NAS refused the connection from the Pi. Totally normal, I need to make a firewall rule allowing that connection. After that, I can see I have data in my database!!! Now it’s time to set up my cron jobs. I’ll use one job to run at multiple times. NWS updates at 5:30am, 11:30am, 5:30pm, and 11:30pm. I checked my run.sh bash script and it already has the correct data, so now I set the cron jobs, ensure my run.sh bash script is executable, and let it rip!\nAgain, more teasers. This snip was taken after this work was done, and you’ll see some crontab entries for things I’ll talk about in future posts. See you next time!\n",
+  "wordCount" : "1152",
+  "inLanguage": "en",
+  "datePublished": "2026-01-09T00:00:00Z",
+  "dateModified": "2026-01-09T00:00:00Z",
+  "author":{
+    "@type": "Person",
+    "name": "ScriptedVestige"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/infrastructure/timescaledb/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "ScriptedVestige",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="ScriptedVestige (Alt + H)">ScriptedVestige</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/infrastructure/" title="Infrastructure">
+                    <span>Infrastructure</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/code/" title="Code">
+                    <span>Code</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/data_analysis/" title="Data Analysis">
+                    <span>Data Analysis</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/troubleshooting/" title="Troubleshooting">
+                    <span>Troubleshooting</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <div class="breadcrumbs"><a href="http://localhost:1313/">Home</a>&nbsp;»&nbsp;<a href="http://localhost:1313/infrastructure/">Infrastructure</a></div>
+    <h1 class="post-title entry-hint-parent">
+      Portainer &amp; TimescaleDB
+    </h1>
+    <div class="post-description">
+      Setting up my database.
+    </div>
+    <div class="post-meta"><span title='2026-01-09 00:00:00 +0000 UTC'>January 9, 2026</span>&nbsp;·&nbsp;<span>6 min</span>&nbsp;·&nbsp;<span>ScriptedVestige</span>
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#portainer-install" aria-label="Portainer Install">Portainer Install</a></li>
+                <li>
+                    <a href="#timescaledb-install" aria-label="TimescaleDB Install">TimescaleDB Install</a></li>
+                <li>
+                    <a href="#setting-the-scrapers-up" aria-label="Setting the scrapers up">Setting the scrapers up</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><p>I&rsquo;m going to run TimescaleDB in Portainer to host my weather database for my yard and irrigation project.  I decided to use Portainer just because it&rsquo;s easier to use than the Docker CLI, in my opinion.  Portainer is available as a native app within TrueNAS as well, so everything will be nice and smooth.</p>
+<p>TimescaleDB was my choice over vanilla PostgreSQL or other options because it&rsquo;s great for time series data, which is what I&rsquo;ll be dealing with in the weather data.  It automatically creates chunks within what are called hypertables, which allows you to manage large quantities of data in a time series easily and offers features like continuous aggregates, which will be very useful for what I&rsquo;ll be doing.</p>
+<p>I&rsquo;ve done some building and testing of my scrapers that grab weather forecast data from the National Weather Service.  Those were saving to a local test database on my laptop while I was building.  Once the database is set up on the NAS, I&rsquo;ll point the scrapers to the new database and set cron jobs to fire four times per day for the forecast scrapers, and once per hour for the severe weather alert scraper.</p>
+<h3 id="portainer-install">Portainer Install<a hidden class="anchor" aria-hidden="true" href="#portainer-install">#</a></h3>
+<p>I&rsquo;ll start by selecting the Apps tab in the TrueNAS GUI, click Discover Apps, then find the Portainer app.  I need to set up a pool to install, so I&rsquo;ll select my mainpool.</p>
+<p>I&rsquo;m going to leave all the defaults selected on the Portainer configuration, except I&rsquo;m going to select Host Path for Portainer Storage and select /mnt/mainpool, click the Create Dataset option, then enter &ldquo;portainer&rdquo;, then I&rsquo;ll click Install.  Selecting a Host Path for the storage means the data will be stored directly on the NAS in the selected dataset, not within the app.  This dataset will hold the data related to Portainer.  I should have set up the dataset beforehand, but this way works as well.</p>
+<p>After the app is installed, I need to start the app, and then on the right I&rsquo;ll click the HTTPS button and see what pops up.  Nothing.  The app is starting but then immediately crashes.  After doing some troubleshooting, I find that the issue is because the owner of the dataset is root, it needs to be apps.  This is why it&rsquo;s better to create the dataset and give it the appropriate owner before installing and configuring the app.  When creating the dataset from the app configuration, it defaulted to giving root the dataset ownership.  I&rsquo;ll modify the permissions to have apps as the owner, and now it starts and stays up as expected and I&rsquo;ve got access.</p>
+<p>I land at a page that prompts me to create an admin username and password.  Once I do that, I&rsquo;m in.</p>
+<p><img alt="TrueNAS Apps" loading="lazy" src="/infrastructure/truenas_apps_20260311.png"></p>
+<p>Now, what&rsquo;s interesting here is that TrueNAS Applications are just Docker containers.  So when I add applications through TrueNAS, they appear in Portainer as well.  This snip was taken more recently than the work in this writeup, so you can see any container that starts with &ldquo;ix-*&rdquo; is an Application installed through the TrueNAS Application GUI.</p>
+<p><img alt="Portainer Containers" loading="lazy" src="/infrastructure/portainer_containers_20260311.png"></p>
+<h3 id="timescaledb-install">TimescaleDB Install<a hidden class="anchor" aria-hidden="true" href="#timescaledb-install">#</a></h3>
+<p>Now I&rsquo;ll grab the TimescaleDB Docker image.  I&rsquo;ll select the local environment in Portainer and I can see a Portainer container in the containers tab.  I&rsquo;ll create a new container in Portainer and name it timescaleDB.  I&rsquo;ll go to DockerHub and see what the latest image is.  It looks like timescale/timescaledb:latest-pg17 is the most recent, so I&rsquo;ll enter that in the Image field in Portainer.  I&rsquo;m going to map the ports on the host 5432 to container 5432.  In the advanced options, I&rsquo;ll mount the container volume to the dataset by using /var/lib/postgresql/data, selecting bind, then using path /mnt/mainpool/db_data.  This will give me persistent storage on the NAS which should survive container restarts and updates.  I&rsquo;ll then need to create some environment variables for username, password, and database name.  Those will be POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB, respectively.  I&rsquo;ll change the restart policy to Always.  And now I&rsquo;ll deploy.</p>
+<p>I&rsquo;ve already got psql on my laptop from earlier scraper work,  so I&rsquo;ll start that up, and once I give the proper information, I&rsquo;m in.  Very good!  I can run &ldquo;select version();&rdquo; and &ldquo;\dx&rdquo; commands to see that I&rsquo;ve got the right version I selected and that the Timescale extension is installed.  Now I&rsquo;ll take my saved SQL statements from my testing and create my tables.  I&rsquo;ve copied and pasted my create table commands setting the schema for my three tables I have so far.  Now I&rsquo;ll convert each table to a hypertable for Timescale magic.</p>
+<pre tabindex="0"><code>select create_hypertable(&#39;home_forecast&#39;, &#39;starttime&#39;, if_not_exists =&gt; TRUE);
+select create_hypertable(&#39;work_forecast&#39;, &#39;starttime&#39;, if_not_exists =&gt; TRUE);
+select create_hypertable(&#39;alerts&#39;, &#39;onset&#39;, if_not_exists =&gt; TRUE);
+</code></pre><p>The commands below will confirm that my tables were created with the intended schema and that they were successfully converted to hypertables.</p>
+<pre tabindex="0"><code>\d+ [tablename] 
+
+select * from timescaledb_information.hypertables;
+</code></pre><p>I&rsquo;ll have more tables to set up when I deploy my weather station and other sensors in the yard, but those are stories for another day.</p>
+<p>This snip was taken long after the initial setup of the database, so you can see many tables and views.  Don&rsquo;t worry, I&rsquo;ll have future posts covering all of that!</p>
+<p><img alt="Current TimescaleDB Tables" loading="lazy" src="/infrastructure/timescale_tables&views_20260311.png"></p>
+<h3 id="setting-the-scrapers-up">Setting the scrapers up<a hidden class="anchor" aria-hidden="true" href="#setting-the-scrapers-up">#</a></h3>
+<p>The next move is to copy my NWS scraper modules to the Pi that is currently running my daily briefing.  I&rsquo;ll do that, then update the config file with my new TimescaleDB data, then do a manual run to test hitting the API and inserting into the appropriate database tables.</p>
+<p>I&rsquo;m going to use SCP to copy all of the project files from my laptop to the Pi.  Another way to do this would be to push to a GitHub repo with the laptop, then pull from the repo with the Pi, either way works.  I want to use the -r option with SCP to copy the entire directory and subdirectories recursively in one shot.</p>
+<p>I made a mistake here because I copied my venv from my Windows laptop to the Pi, which isn&rsquo;t going to work on the Pi.  I&rsquo;ll need to delete that, then create a new venv and install my packages from requirements.txt.  Now I&rsquo;m ready to test.</p>
+<p>I&rsquo;ve tried a manual run, and my log shows that the NAS refused the connection from the Pi.  Totally normal, I need to make a firewall rule allowing that connection.  After that, I can see I have data in my database!!!  Now it&rsquo;s time to set up my cron jobs.  I&rsquo;ll use one job to run at multiple times.  NWS updates at 5:30am, 11:30am, 5:30pm, and 11:30pm.  I checked my run.sh bash script and it already has the correct data, so now I set the cron jobs, ensure my run.sh bash script is executable, and let it rip!</p>
+<p>Again, more teasers.  This snip was taken after this work was done, and you&rsquo;ll see some crontab entries for things I&rsquo;ll talk about in future posts.  See you next time!</p>
+<p><img alt="Directory and Cron" loading="lazy" src="/infrastructure/weather_scrapers_crontab_20260311.png"></p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/truenas/">TrueNAS</a></li>
+      <li><a href="http://localhost:1313/tags/data/">Data</a></li>
+      <li><a href="http://localhost:1313/tags/timescale/">Timescale</a></li>
+      <li><a href="http://localhost:1313/tags/portainer/">Portainer</a></li>
+      <li><a href="http://localhost:1313/tags/bash/">Bash</a></li>
+      <li><a href="http://localhost:1313/tags/cron/">Cron</a></li>
+      <li><a href="http://localhost:1313/tags/python/">Python</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="next" href="http://localhost:1313/infrastructure/truenas_config/">
+    <span class="title">Next »</span>
+    <br>
+    <span>TrueNAS Configuration</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">ScriptedVestige</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

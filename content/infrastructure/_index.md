@@ -5,3 +5,4 @@ title: Infrastructure
 description: Networking, home lab hardware, VLANs, and everything physical.
 ---
 
+![Current Network Diagram](/infrastructure/current_infra_20260311.png#center)

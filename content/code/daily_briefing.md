@@ -69,3 +69,15 @@ Each module imports what it needs from the file and time utilities modules to ge
 ### Future Plans
 As mentioned earlier, I need to change the weather module to pull from the database.  This will reduce the number of times I'm calling NWS.  Due to the modular nature of this project, I've been able to copy and modify certain modules to work with other projects, which has been very nice.  At this point, I can add or remove any module without issue.  I'll likely add some modules that add sections for irrigation schedules, severe weather alerts, whatever else comes mind.
 
+### Templates
+Here are some snips of the templates with the placeholders for the data to be injected.  Adding the "Unsubscribe" button was due to the emails being sent to my spam folder.  I read some email providers don't like it when newsletter type emails don't have an unsubscribe button.  After adding the button (which doesn't do anything, btw), my emails went to the inbox.
+
+The midday briefing does not have the wardrobe section as mentioned previously.
+
+![Morning Briefing](/code/morning_briefing_template.png)
+
+The data is injected into the placeholder in the wardrobe preview template, with a header for each workday, the categories below it, and spacing between each day.
+
+![Weekly Wardrobe Preview](/code/wardrobe_preview_template.png)
+
+

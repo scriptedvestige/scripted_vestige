@@ -14,11 +14,13 @@ comments: "false"
 searchHidden: "false"
 ---
 To start my home lab journey, I decided to rebuild my network from scratch with some equipment that would allow me a bit more control than most consumer grade stuff.  I thought that would be a good place to start as it supports a lot of the things I'll be doing down the road.
+
 ### Hardware
 I went with all Ubiquiti gear for ease of use as far as pushing changes is concerned.  I've got one control plane, and any changes are automatically applied to whatever device needs the changes applied.  
 * **Ubiquiti Dream Machine Pro**  
 * **Ubiquiti USW-24-POE Switch** 
 * **Ubiquiti U6+ Access Point**  
+
 ### Initial Install & Configuration
 I started by racking and booting the UDM Pro. The first boot takes a few minutes, and the front panel display shows the progress. I decided to configure the UDM offline, without using a Ubiquiti cloud account and not allowing remote access.  I want to minimize any potential attack surface and not expose any services to WAN.
 
@@ -28,6 +30,7 @@ To complete the basic local setup:
 * Assigned a local admin password  
 * Verified IP and connectivity  
 * Ran a speed test (645 Mbps down/up, not bad for coax!) 
+
 ### Switch Setup
 Next, I powered up the USW-24-POE switch, connected it to the UDM, then adopted it in UniFi Network.  UniFi Network runs on the UDM, there is no need for a standalone service in this case.  I assigned the switch a static IP. Using custom length Ethernet cables crimped with T568B for consistency.  I then configured a port on the switch to live on the management VLAN and connected my laptop to the switch and verified proper DHCP function.
 
@@ -35,6 +38,9 @@ Port profiles were created to simplify future configuration:
 * Disabled Port for unused ports  
 * Access ports for each VLAN  
 * Trunk port for Access Point (PoE + Management VLAN + required tagged VLANs)  
+
+![Ethernet Port Profiles](/infrastructure/ethernet_port_profiles.png)
+
 ### Firewall, VLANs & Security
 After the initial switch configuration, I focused on tightening security a bit:  
 * Disabled UPnP
@@ -43,6 +49,8 @@ After the initial switch configuration, I focused on tightening security a bit:
 * Created all of the VLANs to segment the LAN
 * Default security posture set to Block All for new VLANs
 * Created granular rules, e.g., “Laptop Comms” with selective Allow list access  
+
+![Current VLANs](/infrastructure/current_vlans_20260311.png)
 
 DHCP Reservations were assigned for key devices to simplify firewall rules and migration later.
 

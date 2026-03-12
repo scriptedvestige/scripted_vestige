@@ -27,6 +27,10 @@ I originally picked TrueNAS because it can host virtual machines and containers.
 
 I’m running a RAIDZ2 configuration on the HDDs. This gives me 24TB of usable storage and allows failure of two disks without losing any data.
 
+![TrueNAS Specs](/infrastructure/truenas_specs_20260311.png)
+
+(Yes, I know I need to configure backups!  That'll be another post down the road.)
+
 ### Bringing the NAS Online
 Because the NAS had been offline and not received any updates, I wanted to bring it back up while it was still offline. This let me validate configuration before it had any exposure to WAN.
 
