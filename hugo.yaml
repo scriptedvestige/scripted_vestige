@@ -68,8 +68,8 @@ menu:
     - name: Infrastructure
       url: /infrastructure/
       weight: 10
-    - name: Code
-      url: /code/
+    - name: Services
+      url: /services/
       weight: 20
     - name: Data Analysis
       url: /data_analysis/

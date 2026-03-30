@@ -74,10 +74,8 @@ Here are some snips of the templates with the placeholders for the data to be in
 
 The midday briefing does not have the wardrobe section as mentioned previously.
 
-![Morning Briefing](/code/morning_briefing_template.png)
+![Morning Briefing](/services/morning_briefing_template.png)
 
 The data is injected into the placeholder in the wardrobe preview template, with a header for each workday, the categories below it, and spacing between each day.
 
-![Weekly Wardrobe Preview](/code/wardrobe_preview_template.png)
-
-
+![Weekly Wardrobe Preview](/services/wardrobe_preview_template.png)
