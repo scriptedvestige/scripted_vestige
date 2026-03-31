@@ -21,6 +21,11 @@ params:
   author: "ScriptedVestige"
   defaultTheme: dark
   disableThemeToggle: false
+  mainSections:
+    - infrastructure
+    - services
+    - data_analysis
+    - troubleshooting
 
   # Home page layout
   homeInfoParams:
