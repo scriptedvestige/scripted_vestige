@@ -23,7 +23,7 @@ This form allows me to select event type (fresh, dusting, or melt), zone (backya
 
 ![Snow Event Form](/services/snow_event_log.png)
 
-Then I made a dashboard in Grafana to track snow events logged within the last *n* days.
+Then I made a dashboard in Grafana to track snow events logged within the last *n* days.  Right now, I don't have any snow events appearing on the panel given the time frame, but here's a look at the underlying table.
 
 ![Manual Snow Logging](/services/manual_snow_events_table.png)
 
