@@ -7,7 +7,7 @@ tags:
   - python
   - cron
 categories:
-  - Code
+  - Services
 showToc: "true"
 comments: "false"
 searchHidden: "false"
