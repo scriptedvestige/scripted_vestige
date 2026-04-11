@@ -28,10 +28,6 @@ params:
     - troubleshooting
 
   # Home page layout
-  homeInfoParams:
-    Title: "Welcome to ScriptedVestige!"
-    Content: |
-
   socialIcons:
     - name: github
       url: "https://github.com/scriptedvestige"
