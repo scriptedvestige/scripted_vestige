@@ -27,10 +27,6 @@ params:
     - data_analysis
     - troubleshooting
 
-  # Home page layout
-  homeInfoParams:
-    Title: "Welcome to ScriptedVestige!"
-
   socialIcons:
     - name: github
       url: "https://github.com/scriptedvestige"
