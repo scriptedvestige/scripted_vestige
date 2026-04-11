@@ -282,9 +282,9 @@ AND obs.period_start < NOW();
 
 And finally, I'll hop back into Grafana to create some dashboard panels.
 
-![Hourly Precip Accuracy](/services/grafana_precip_hourly.png)
+![Hourly Precip Accuracy](/services/grafana_precip_acc_hourly.png)
 
-![Monthly Precip Accuracy](/services/grafana_precip_monthly.png)
+![Monthly Precip Accuracy](/services/grafana_precip_acc_monthly.png)
 
 ![Precip Surprise!](/services/grafana_precip_surprise.png)
 
