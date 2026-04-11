@@ -29,6 +29,7 @@ params:
 
   # Home page layout
   homeInfoParams:
+    Title: "Welcome to ScriptedVestige!"
 
   socialIcons:
     - name: github
