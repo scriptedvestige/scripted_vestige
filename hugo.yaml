@@ -28,6 +28,9 @@ params:
     - troubleshooting
 
   # Home page layout
+  homeInfoParams:
+    Content: >
+
   socialIcons:
     - name: github
       url: "https://github.com/scriptedvestige"
