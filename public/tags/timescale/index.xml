@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Timescale on ScriptedVestige</title>
+    <link>http://localhost:1313/tags/timescale/</link>
+    <description>Recent content in Timescale on ScriptedVestige</description>
+    <generator>Hugo -- 0.157.0</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 24 Feb 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/timescale/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Unplanned Outage Troubleshooting</title>
+      <link>http://localhost:1313/troubleshooting/outage_20260224/</link>
+      <pubDate>Tue, 24 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/troubleshooting/outage_20260224/</guid>
+      <description>Sometimes other people break things, it&amp;#39;s not always my fault!</description>
+    </item>
+    <item>
+      <title>Manual Event Logging</title>
+      <link>http://localhost:1313/services/manual_events/</link>
+      <pubDate>Sat, 14 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/services/manual_events/</guid>
+      <description>Logging things my sensors can&amp;#39;t.</description>
+    </item>
+    <item>
+      <title>Grafana</title>
+      <link>http://localhost:1313/services/grafana/</link>
+      <pubDate>Sat, 07 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/services/grafana/</guid>
+      <description>Visualize all of the data!</description>
+    </item>
+    <item>
+      <title>Weather Station Deployment</title>
+      <link>http://localhost:1313/infrastructure/weather_station/</link>
+      <pubDate>Sat, 31 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/infrastructure/weather_station/</guid>
+      <description>Deploying the weather station and building service to ingest data to the database.</description>
+    </item>
+    <item>
+      <title>Portainer &amp; TimescaleDB</title>
+      <link>http://localhost:1313/services/timescaledb/</link>
+      <pubDate>Fri, 09 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/services/timescaledb/</guid>
+      <description>Setting up my database.</description>
+    </item>
+  </channel>
+</rss>

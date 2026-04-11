@@ -4,9 +4,7 @@
     <h1>{{ .Title | markdownify }}</h1>
   </header>
   <div class="entry-content">
-      <p>I'm an IT guy documenting my home lab which covers networking, infrastructure, automation, and everything in between.  This is a living record of things I've built, broken, and fixed.</p>
-      <br><br>
-      <p>Have a question or want to get in touch?  Reach me at <a href="mailto:contact@scriptedvestige.com">contact@scriptedvestige.com</a>!</p>
+      {{ .Content | markdownify }}
   </div>
   <footer class="entry-footer">
     {{ partial "social_icons.html" (dict "align" site.Params.homeInfoParams.AlignSocialIconsTo) }}

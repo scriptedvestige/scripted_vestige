@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto" data-theme="dark">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Unplanned Outage Troubleshooting | ScriptedVestige</title>
+<meta name="keywords" content="ubiquiti, network, pi, fastapi, grafana, timescale">
+<meta name="description" content="Sometimes other people break things, it&#39;s not always my fault!">
+<meta name="author" content="ScriptedVestige">
+<link rel="canonical" href="http://localhost:1313/troubleshooting/outage_20260224/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.a29c24210eb31d9ce56f669c66a35c9c51b17376b7764e336a49af7dec914cf0.css" integrity="sha256-opwkIQ6zHZzlb2acZqNcnFGxc3a3dk4zakmvfeyRTPA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/troubleshooting/outage_20260224/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><meta property="og:url" content="http://localhost:1313/troubleshooting/outage_20260224/">
+  <meta property="og:site_name" content="ScriptedVestige">
+  <meta property="og:title" content="Unplanned Outage Troubleshooting">
+  <meta property="og:description" content="Sometimes other people break things, it&#39;s not always my fault!">
+  <meta property="og:locale" content="en-us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="troubleshooting">
+    <meta property="article:published_time" content="2026-02-24T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-02-24T00:00:00+00:00">
+    <meta property="article:tag" content="Ubiquiti">
+    <meta property="article:tag" content="Network">
+    <meta property="article:tag" content="Pi">
+    <meta property="article:tag" content="Fastapi">
+    <meta property="article:tag" content="Grafana">
+    <meta property="article:tag" content="Timescale">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Unplanned Outage Troubleshooting">
+<meta name="twitter:description" content="Sometimes other people break things, it&#39;s not always my fault!">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Troubleshooting",
+      "item": "http://localhost:1313/troubleshooting/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Unplanned Outage Troubleshooting",
+      "item": "http://localhost:1313/troubleshooting/outage_20260224/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Unplanned Outage Troubleshooting",
+  "name": "Unplanned Outage Troubleshooting",
+  "description": "Sometimes other people break things, it's not always my fault!",
+  "keywords": [
+    "ubiquiti", "network", "pi", "fastapi", "grafana", "timescale"
+  ],
+  "articleBody": "Power \u0026 ISP Outages While at work, I received a notification at 14:35 local time from my power company that there was an outage in my area. I then received a notification at 15:50 that the power was back up. I also received notification from my ISP reporting an outage at 15:45 local due to the power outage, which is weird, but after I got home, I could see multiple occurrences of losing connectivity to my ISP in the UDM.\nSurvey the Situation Upon returning home, I find that my network was up, but my Grafana dashboards are not reporting current data. The data pipeline was clearly broken somewhere between the weather station and Timescale.\nI began with checking that my Pi is up, my NAS is up, and that all of my containers are up. They all are. From what I can tell from uptime reported by the NAS, Pi, and gateway, the UPS held through the outage and nothing ever shut down.\nI’m seeing some weird stuff with Pi-hole where I didn’t have many queries throughout last night into today, then a huge spike when I got home. That’s likely unrelated and something else I’ll need to address later.\nI had set Network UPS Tools up on a Protectli Vault to try to orchestrate a graceful shutdown in the event of a power outage. I set up orchestration to shut things down gracefully, but it didn’t fire. That’s a story for another day. The NUT script on the Vault doesn’t show a log where it detected being on battery, but I can see though in PeaNUT on the NAS that the battery did discharge and is currently charging back up now. I’ll need to address that issue later.\nSo why is my dashboard not displaying current weather data? I was able to connect to Timescale running in the Portainer container using pgAdmin. I see that my latest data from my weather station was inserted right before the power outage was reported. I can see on my Pi that my API services are running, and that they are attempting to write to the database. I can also see in my NWS scraper logs that I’ve got successful scrapes of forecast data and severe weather alerts.\nInterestingly, forecast data was inserting when the successful runs are seen in the log. I can connect to the admin GUI of the weather station console and see that it is online and still configured properly.\nI checked my weather station console and can see that the time is accurate, and it is showing logs of observations reported from the weather station.\nI look at my flows in the UDM and see that the weather station console is pushing data to the API that the Pi hosts.\nI can use my manual snow logging API that lives on the Pi to record a test event to the manual.snow_events table on Timescale. This works and the Snow Events dashboard in Grafana shows the test entry.\nTaking Action I’ll restart the Ecowitt ingest service on the Pi, which is an API that handles catching data from my weather station and inserting it into my database tables, to see if that will do the trick. Instead of waiting for the usual five minute interval for the console to push, I’ll tell the console to push every sixty seconds so I can troubleshoot faster.\nI can see in the UDM that the weather station pushed the data to the Pi and that the Pi caught it and logged a 200 response, but nothing is appearing either in the appropriate Timescale tables or in Grafana. I’ll stop the Ecowitt ingest service on the Pi, then start it instead of restarting. Then, I’ll modify my api.py file to log the raw requests being caught to a JSON file. This code already existed from testing and just needed to be uncommented.\nIn the UDM, when I look at the weather station console, I see it has Poor connectivity. I can see when it went offline, as it’s not connected to a UPS, the UDM shows the console was not connected to Wi-Fi from 14:41 to 15:20.\nI’ll take a look at the service logs using the command\njournalctl -u ecowitt_ingest.service When I get to today’s entries, I see no interruptions aside from my restarts of the service. I’m also seeing that the raw posts from the weather station appear to not be containing any data. So it seems as if the weather station is sending packets, but there’s no data there. Because the data isn’t encrypted, I’m going to install tcpdump on the Pi and try to capture some packets to confirm whether the packets are empty. I’ll install with the command\nsudo apt install tcpdump then listen with\nsudo tcpdump -n port 44380 -v because I’m sending to and listening on port 44380 and -v gives me verbose output.\nI’m not able to see the actual data of the packet, but I can see packets coming in that don’t appear to be empty, but maybe not complete given the size of the packets. I’m still not seeing any data in my JSON file though, and nothing in the database or Grafana.\nI’m going to reboot the Pi as well as the weather station console and see if that will do the trick. An issue that I didn’t consider was that I have a Pi-hole running on this Pi, but didn’t set a backup DNS server. That means that when I bring the Pi down, I lose DNS resolution and my whole network breaks. For now, I’m going to add a backup DNS server outside of my network to get the network back up.\nOnce the Pi is back up, I can now see I’ve got some partial data in my raw_posts.json from the Ecowitt ingest service, but I’m still not seeing anything in Timescale or Grafana. It looks like I’m only catching partial data from the weather station console which could cause issues with the script. Now that the Pi is back up and I know that my ingest service is up and should be functioning properly, I’m going to reboot the weather station console one more time, now that it will be able to connect and resolve DNS.\nI built in a /health endpoint on the Ecowitt ingest API, which returns the current timestamp and “OK” when it’s up, and I can get that response. This definitely seems to be an issue of the weather station console sending incomplete data which is causing an error. I’ll go reboot it one more time and hopefully it’ll come back up properly. And it did. I also noticed that the console had switched to UTC and had reset the date to 2024-01-01, so I changed it back to my local time zone and the proper date.\nResolution There wound up being a few issues here. When the weather station console lost power, it caused the date and time to be thrown off when the console came back online. Then, after it initially came back up, it was sending incomplete data. So I had incomplete data being inserted into the database with the wrong timestamps attached.\nInstead of trying to edit the timestamps in the table, I simply deleted the data with the bad timestamps with the following command:\nDELETE FROM ws_observations WHERE time::date = '2024-01-01'; At the end of the day, the rows with the bad timestamps will be a drop in the bucket compared to my total amount of data.\nIn total, this caused me roughly six hours of downtime with no data flowing into the database. This took me in total about three hours to troubleshoot once arriving home and having access.\nGoing Forward… I’m probably going to get a little UPS for the Ecowitt console now that I know that it seems sensitive to losing power. I need to finish my NUT orchestration so that all of my devices shut themselves down gracefully. Once I can accomplish that, I can work on bringing everything back up after power restores. Learn how to use tcpdump properly when you’re not mid-outage and trying to move quickly. I need to set up my second Pi and have both Pis running Pi-hole so I can fail over if one goes down. ",
+  "wordCount" : "1388",
+  "inLanguage": "en",
+  "datePublished": "2026-02-24T00:00:00Z",
+  "dateModified": "2026-02-24T00:00:00Z",
+  "author":{
+    "@type": "Person",
+    "name": "ScriptedVestige"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/troubleshooting/outage_20260224/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "ScriptedVestige",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="ScriptedVestige (Alt + H)">ScriptedVestige</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/infrastructure/" title="Infrastructure">
+                    <span>Infrastructure</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/services/" title="Services">
+                    <span>Services</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/data_analysis/" title="Data Analysis">
+                    <span>Data Analysis</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/troubleshooting/" title="Troubleshooting">
+                    <span>Troubleshooting</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <div class="breadcrumbs"><a href="http://localhost:1313/">Home</a>&nbsp;»&nbsp;<a href="http://localhost:1313/troubleshooting/">Troubleshooting</a></div>
+    <h1 class="post-title entry-hint-parent">
+      Unplanned Outage Troubleshooting
+    </h1>
+    <div class="post-description">
+      Sometimes other people break things, it&#39;s not always my fault!
+    </div>
+    <div class="post-meta"><span title='2026-02-24 00:00:00 +0000 UTC'>February 24, 2026</span>&nbsp;·&nbsp;<span>7 min</span>&nbsp;·&nbsp;<span>ScriptedVestige</span>
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#power--isp-outages" aria-label="Power &amp; ISP Outages">Power &amp; ISP Outages</a></li>
+                <li>
+                    <a href="#survey-the-situation" aria-label="Survey the Situation">Survey the Situation</a></li>
+                <li>
+                    <a href="#taking-action" aria-label="Taking Action">Taking Action</a></li>
+                <li>
+                    <a href="#resolution" aria-label="Resolution">Resolution</a></li>
+                <li>
+                    <a href="#going-forward" aria-label="Going Forward&hellip;">Going Forward&hellip;</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><h3 id="power--isp-outages">Power &amp; ISP Outages<a hidden class="anchor" aria-hidden="true" href="#power--isp-outages">#</a></h3>
+<p>While at work, I received a notification at 14:35 local time from my power company that there was an outage in my area.  I then received a notification at 15:50 that the power was back up.  I also received notification from my ISP reporting an outage at 15:45 local due to the power outage, which is weird, but after I got home, I could see multiple occurrences of losing connectivity to my ISP in the UDM.</p>
+<h3 id="survey-the-situation">Survey the Situation<a hidden class="anchor" aria-hidden="true" href="#survey-the-situation">#</a></h3>
+<p>Upon returning home, I find that my network was up, but my Grafana dashboards are not reporting current data.  The data pipeline was clearly broken somewhere between the weather station and Timescale.</p>
+<p>I began with checking that my Pi is up, my NAS is up, and that all of my containers are up.  They all are.  From what I can tell from uptime reported by the NAS, Pi, and gateway, the UPS held through the outage and nothing ever shut down.</p>
+<p>I&rsquo;m seeing some weird stuff with Pi-hole where I didn&rsquo;t have many queries throughout last night into today, then a huge spike when I got home.  That&rsquo;s likely unrelated and something else I&rsquo;ll need to address later.</p>
+<p>I had set Network UPS Tools up on a Protectli Vault to try to orchestrate a graceful shutdown in the event of a power outage.  I set up orchestration to shut things down gracefully, but it didn&rsquo;t fire.  That&rsquo;s a story for another day.  The NUT script on the Vault doesn&rsquo;t show a log where it detected being on battery, but I can see though in PeaNUT on the NAS that the battery did discharge and is currently charging back up now.  I&rsquo;ll need to address that issue later.</p>
+<p>So why is my dashboard not displaying current weather data?  I was able to connect to Timescale running in the Portainer container using pgAdmin.  I see that my latest data from my weather station was inserted right before the power outage was reported.  I can see on my Pi that my API services are running, and that they are attempting to write to the database.  I can also see in my NWS scraper logs that I&rsquo;ve got successful scrapes of forecast data and severe weather alerts.</p>
+<p>Interestingly, forecast data <em>was</em> inserting when the successful runs are seen in the log.  I can connect to the admin GUI of the weather station console and see that it is online and still configured properly.</p>
+<p>I checked my weather station console and can see that the time is accurate, and it is showing logs of observations reported from the weather station.</p>
+<p>I look at my flows in the UDM and see that the weather station console is pushing data to the API that the Pi hosts.</p>
+<p>I can use my manual snow logging API that lives on the Pi to record a test event to the manual.snow_events table on Timescale.  This works and the Snow Events dashboard in Grafana shows the test entry.</p>
+<h3 id="taking-action">Taking Action<a hidden class="anchor" aria-hidden="true" href="#taking-action">#</a></h3>
+<p>I&rsquo;ll restart the Ecowitt ingest service on the Pi, which is an API that handles catching data from my weather station and inserting it into my database tables, to see if that will do the trick.  Instead of waiting for the usual five minute interval for the console to push, I&rsquo;ll tell the console to push every sixty seconds so I can troubleshoot faster.</p>
+<p>I can see in the UDM that the weather station pushed the data to the Pi and that the Pi caught it and logged a 200 response, but nothing is appearing either in the appropriate Timescale tables or in Grafana.  I&rsquo;ll stop the Ecowitt ingest service on the Pi, then start it instead of restarting.  Then, I&rsquo;ll modify my api.py file to log the raw requests being caught to a JSON file.  This code already existed from testing and just needed to be uncommented.</p>
+<p>In the UDM, when I look at the weather station console, I see it has Poor connectivity.  I can see when it went offline, as it&rsquo;s not connected to a UPS, the UDM shows the console was not connected to Wi-Fi from 14:41 to 15:20.</p>
+<p>I&rsquo;ll take a look at the service logs using the command</p>
+<pre tabindex="0"><code>journalctl -u ecowitt_ingest.service
+</code></pre><p>When I get to today&rsquo;s entries, I see no interruptions aside from my restarts of the service.  I&rsquo;m also seeing that the raw posts from the weather station appear to not be containing any data.  So it seems as if the weather station is sending packets, but there&rsquo;s no data there.  Because the data isn&rsquo;t encrypted, I&rsquo;m going to install tcpdump on the Pi and try to capture some packets to confirm whether the packets are empty.  I&rsquo;ll install with the command</p>
+<pre tabindex="0"><code>sudo apt install tcpdump
+</code></pre><p>then listen with</p>
+<pre tabindex="0"><code>sudo tcpdump -n port 44380 -v
+</code></pre><p>because I&rsquo;m sending to and listening on port 44380 and -v gives me verbose output.</p>
+<p>I&rsquo;m not able to see the actual data of the packet, but I can see packets coming in that don&rsquo;t appear to be empty, but maybe not complete given the size of the packets.  I&rsquo;m still not seeing any data in my JSON file though, and nothing in the database or Grafana.</p>
+<p>I&rsquo;m going to reboot the Pi as well as the weather station console and see if that will do the trick.  An issue that I didn&rsquo;t consider was that I have a Pi-hole running on this Pi, but didn&rsquo;t set a backup DNS server.  That means that when I bring the Pi down, I lose DNS resolution and my whole network breaks.  For now, I&rsquo;m going to add a backup DNS server outside of my network to get the network back up.</p>
+<p>Once the Pi is back up, I can now see I&rsquo;ve got some partial data in my raw_posts.json from the Ecowitt ingest service, but I&rsquo;m still not seeing anything in Timescale or Grafana.  It looks like I&rsquo;m only catching partial data from the weather station console which could cause issues with the script.  Now that the Pi is back up and I know that my ingest service is up and should be functioning properly, I&rsquo;m going to reboot the weather station console one more time, now that it will be able to connect and resolve DNS.</p>
+<p>I built in a /health endpoint on the Ecowitt ingest API, which returns the current timestamp and &ldquo;OK&rdquo; when it&rsquo;s up, and I can get that response.  This definitely seems to be an issue of the weather station console sending incomplete data which is causing an error.  I&rsquo;ll go reboot it one more time and hopefully it&rsquo;ll come back up properly.  And it did.  I also noticed that the console had switched to UTC and had reset the date to 2024-01-01, so I changed it back to my local time zone and the proper date.</p>
+<h3 id="resolution">Resolution<a hidden class="anchor" aria-hidden="true" href="#resolution">#</a></h3>
+<p>There wound up being a few issues here.  When the weather station console lost power, it caused the date and time to be thrown off when the console came back online.  Then, after it initially came back up, it was sending incomplete data.  So I had incomplete data being inserted into the database with the wrong timestamps attached.</p>
+<p>Instead of trying to edit the timestamps in the table, I simply deleted the data with the bad timestamps with the following command:</p>
+<pre tabindex="0"><code>DELETE FROM ws_observations WHERE time::date = &#39;2024-01-01&#39;;
+</code></pre><p>At the end of the day, the rows with the bad timestamps will be a drop in the bucket compared to my total amount of data.</p>
+<p>In total, this caused me roughly six hours of downtime with no data flowing into the database.  This took me in total about three hours to troubleshoot once arriving home and having access.</p>
+<h3 id="going-forward">Going Forward&hellip;<a hidden class="anchor" aria-hidden="true" href="#going-forward">#</a></h3>
+<ul>
+<li>I&rsquo;m probably going to get a little UPS for the Ecowitt console now that I know that it seems sensitive to losing power.</li>
+<li>I need to finish my NUT orchestration so that all of my devices shut themselves down gracefully.  Once I can accomplish that, I can work on bringing everything back up after power restores.</li>
+<li>Learn how to use tcpdump properly when you&rsquo;re not mid-outage and trying to move quickly.</li>
+<li>I need to set up my second Pi and have both Pis running Pi-hole so I can fail over if one goes down.</li>
+</ul>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/ubiquiti/">Ubiquiti</a></li>
+      <li><a href="http://localhost:1313/tags/network/">Network</a></li>
+      <li><a href="http://localhost:1313/tags/pi/">Pi</a></li>
+      <li><a href="http://localhost:1313/tags/fastapi/">Fastapi</a></li>
+      <li><a href="http://localhost:1313/tags/grafana/">Grafana</a></li>
+      <li><a href="http://localhost:1313/tags/timescale/">Timescale</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/troubleshooting/network_outage_20260301/">
+    <span class="title">« Prev</span>
+    <br>
+    <span>Network Outage</span>
+  </a>
+  <a class="next" href="http://localhost:1313/services/manual_events/">
+    <span class="title">Next »</span>
+    <br>
+    <span>Manual Event Logging</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">ScriptedVestige</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

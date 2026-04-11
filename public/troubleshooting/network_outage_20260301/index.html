@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto" data-theme="dark">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Network Outage | ScriptedVestige</title>
+<meta name="keywords" content="network, ecowitt, timescaledb, pi">
+<meta name="description" content="Never trust SD cards.">
+<meta name="author" content="ScriptedVestige">
+<link rel="canonical" href="http://localhost:1313/troubleshooting/network_outage_20260301/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.a29c24210eb31d9ce56f669c66a35c9c51b17376b7764e336a49af7dec914cf0.css" integrity="sha256-opwkIQ6zHZzlb2acZqNcnFGxc3a3dk4zakmvfeyRTPA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/troubleshooting/network_outage_20260301/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><meta property="og:url" content="http://localhost:1313/troubleshooting/network_outage_20260301/">
+  <meta property="og:site_name" content="ScriptedVestige">
+  <meta property="og:title" content="Network Outage">
+  <meta property="og:description" content="Never trust SD cards.">
+  <meta property="og:locale" content="en-us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="troubleshooting">
+    <meta property="article:published_time" content="2026-03-01T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-03-01T00:00:00+00:00">
+    <meta property="article:tag" content="Network">
+    <meta property="article:tag" content="Ecowitt">
+    <meta property="article:tag" content="Timescaledb">
+    <meta property="article:tag" content="Pi">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Network Outage">
+<meta name="twitter:description" content="Never trust SD cards.">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Troubleshooting",
+      "item": "http://localhost:1313/troubleshooting/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Network Outage",
+      "item": "http://localhost:1313/troubleshooting/network_outage_20260301/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Network Outage",
+  "name": "Network Outage",
+  "description": "Never trust SD cards.",
+  "keywords": [
+    "network", "ecowitt", "timescaledb", "pi"
+  ],
+  "articleBody": "Ah, Sunday. The day of rest and relaxation… and troubleshooting why your entire network is down when you wake up. Now, I’m not superstitious, but I am a little stitious, I should have seen this coming. Last night, I woke up in the middle of the night and noticed my watch’s screen was completely white and battery reporting 1%, which never happens as I charge every morning while I get ready and the battery will last until the next morning. The watch is unrelated, but it was a sign for sure.\nSurvey the Situation Anyway, I wake up, no connection to Grafana to check my weather station data. Morning briefing didn’t fire at 06:15, so the network has been down for at least two hours.\nWalking down the hall to let the doggo out, a quick glance shows all of the lights on the rack are lit up, so I’ve got power. No notice from my ISP or power utility regarding any sort of outage. I can’t get any sort of connection to anything internal or external with my phone while having my coffee. I check my DNS settings on my phone… my secondary server isn’t on the list. I add Quad9, boom, I’ve got network. It’s always DNS folks (until it’s not).\nI’ll dig into the UDM and correct my DNS settings. It turns out I applied Quad9 as my backup server on the UDM ISP settings, but each VLAN also had their own settings defined with only the Pi-hole being listed. I’ll go through and remove those per-VLAN custom settings.\nThe Pi that runs my Pi-hole, Ecowitt ingest, manual event logging API, NWS scrapers, and daily briefing was running the OS from the SD card that came with it. When using Pi-hole, SD cards aren’t huge fans of all of the read/write action going on, and with running other heavy read/write services on top of that, so it’s likely the SD card corrupted.\nPast me was ambitious and was thinking I’d build faster than I have, so I’ve got a second 8 GB Pi5 laying around. I ordered SSDs and active coolers for both Pis as the plan was to boot from the SSDs and put them in my 1U GeeekPi chassis and run the two Pis as an HA pair. A while ago, I built the second Pi with the active cooler and SSD installed, and put it in the chassis, I just hadn’t gotten around to the configuration yet. I guess today is that day.\nCorrecting DNS First, I’ll manually modify the DNS settings on my laptop to use Quad9 so I can connect to my password manager and be able to get into all my devices. This will allow me to log into my UDM to correct the DNS issue.\nI’ll go to Settings \u003e Internet \u003e WAN1 and make sure my “global” DNS settings are correct. I’ll change my primary DNS server to the IP that the new Pi will have, and leave Quad9 as my backup for now.\nNow, I’ll go through each VLAN and remove the custom DNS settings for each VLAN and have them rely on the “global” DNS config from the WAN1 interface.\nPi Configuration Now that DNS is using Quad9 as the backup for now and the network is functional, I’ll dig into configuring the new Pi.\nI’ll grab the supplied SD card, and reimage it with Raspberry Pi Imager using Raspberry Pi OS Lite 64-bit, give it a hostname and enable SSH so I can run it headless from the start instead of having to hook up a monitor and keyboard. I’ll also grab the public SSH key that I used with the old Pi to use on this one for now. I’ll make a new pair for the old Pi when I bring that one back up later.\nNow that I’ve got my hostname, user, and SSH configured and formatted, I’ll pop the SD card into the new Pi, connect power, and make an Ethernet cable to connect to the pre-configured switch port.\nWhile I’m waiting for the Pi to do its thing on first boot, I’ll check Grafana, and it looks like the Pi went down between 03:00 and 04:00. I’ll make an annotation on one of my graphs to note the time of the Pi SD card corruption.\nAt this point, I’ve tried creating images multiple times and each time I’m having my SSH connections refused. I’ve double checked my firewall rules and I should be able to SSH into the Pi. The connection refused error indicates an issue with the Pi anyway, not the network.\nAfter some searching, I’ve found the solution is to manually add an ssh file with no extension to the boot partition. This is recommended to enable SSH if the imager isn’t working properly. Once the image is created and fresh, I’ll open up PowerShell, cd to the SD card, then enter\nNew-Item ssh No file extension is added here. I’ll eject the SD card, then pop it back in the Pi.\nOk, I’m finally in using SSH and my SSH key. Now updating the OS isn’t working. It looks like it’s trying to use HTTP via port 80, which I’m blocking at the firewall, so I’ll need to remove that rule at least temporarily. I had blocked any HTTP traffic using port 80 to prevent unencrypted traffic from entering or leaving my network. Updates were successful after removing the rule.\nNow I need to check that the SSD is getting power and detected by running:\nlsblk I’ll copy the OS to the SSD with the command:\nsudo dd if=/dev/mmcblk0 of=/dev/nvme0n1 bs=4M status=progress then change the boot order to boot from the SSD with:\nsudo raspi-config I can now boot from the SSD successfully after shutting down and removing the SD card.\nNow I’m going to use SCP to copy all of my Python projects. I’m going to start with my Ecowitt ingest service (an API that catches data from my weather station) so I can get data flowing into the database again. To do that, I’ll copy my project folder, create my new venv, create the service and start it. Then I’ll need to point the weather station console to push to the new Pi IP and API endpoint. I’ll also need to modify my firewall rules to allow the weather station console to talk to the new Pi and the new Pi to talk to the database.\nI ran into some issues with getting the Ecowitt Ingest service back up. I noticed when pointing the console to the new Pi IP that it had reset itself to point to the Ecowitt servers. I think what it’s doing is if it doesn’t get a 200 response from its pushes for a given amount of time, it fails over and starts trying to send data to the Ecowitt cloud. I reconfigured it and nothing appeared to be saving to the database. After doing some troubleshooting, I noticed the timestamps from the raw data were “2024-01-01 …”. So I checked my code and found no issues, it’s the same code that was working just fine on the old Pi. Then I checked to make sure the Pi had the correct date and time, which it did. After rebooting the Ecowitt console, it had the correct timestamps and I can see data in Grafana and the database now.\nNow I’ll get my Daily Briefing and NWS scrapers up and running. These follow the same process as the Ecowitt ingest with the exception that these two run as cron jobs instead of services. Then finally I’ll set up my Manual Event Logging service with the same process. After setting up each service, I test them to verify they’re working properly before moving on to the next.\nNow I’ll set up logrotate for all of the log files each project drops. I can do them all in one shot with the following config at path “/etc/logrotate.d/piservices” (using sudo nano):\n/opt/ecowitt/error.log /home/prax/daily_briefing/cron.log /home/prax/weather/cron.log { weekly compress delaycompress missingok notifempty rotate 4 } That’s all for today, it’s been a long day. Resolving this issue while doing laundry and other chores around the house took basically my whole day. I still need to install Pi-hole, but that can be a project for another day. The next chapter in this saga will be removing the old Pi from its case, rebuilding it with the new SSD and active cooler, putting it in the chassis with the new Pi, then configuring Pi-hole and HA. The plan is to have the two Pis be twins that can take over for each other if one goes down and maybe do some load balancing. I’ll have to do some research and see what would be the best way to go about having some redundancy with this setup.\n",
+  "wordCount" : "1476",
+  "inLanguage": "en",
+  "datePublished": "2026-03-01T00:00:00Z",
+  "dateModified": "2026-03-01T00:00:00Z",
+  "author":{
+    "@type": "Person",
+    "name": "ScriptedVestige"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/troubleshooting/network_outage_20260301/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "ScriptedVestige",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="ScriptedVestige (Alt + H)">ScriptedVestige</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/infrastructure/" title="Infrastructure">
+                    <span>Infrastructure</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/services/" title="Services">
+                    <span>Services</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/data_analysis/" title="Data Analysis">
+                    <span>Data Analysis</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/troubleshooting/" title="Troubleshooting">
+                    <span>Troubleshooting</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <div class="breadcrumbs"><a href="http://localhost:1313/">Home</a>&nbsp;»&nbsp;<a href="http://localhost:1313/troubleshooting/">Troubleshooting</a></div>
+    <h1 class="post-title entry-hint-parent">
+      Network Outage
+    </h1>
+    <div class="post-description">
+      Never trust SD cards.
+    </div>
+    <div class="post-meta"><span title='2026-03-01 00:00:00 +0000 UTC'>March 1, 2026</span>&nbsp;·&nbsp;<span>7 min</span>&nbsp;·&nbsp;<span>ScriptedVestige</span>
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#survey-the-situation" aria-label="Survey the Situation">Survey the Situation</a></li>
+                <li>
+                    <a href="#correcting-dns" aria-label="Correcting DNS">Correcting DNS</a></li>
+                <li>
+                    <a href="#pi-configuration" aria-label="Pi Configuration">Pi Configuration</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><p>Ah, Sunday.  The day of rest and relaxation&hellip; and troubleshooting why your entire network is down when you wake up.  Now, I&rsquo;m not superstitious, but I am a little stitious, I should have seen this coming.  Last night, I woke up in the middle of the night and noticed my watch&rsquo;s screen was completely white and battery reporting 1%, which never happens as I charge every morning while I get ready and the battery will last until the next morning.  The watch is unrelated, but it was a sign for sure.</p>
+<h3 id="survey-the-situation">Survey the Situation<a hidden class="anchor" aria-hidden="true" href="#survey-the-situation">#</a></h3>
+<p>Anyway, I wake up, no connection to Grafana to check my weather station data.  Morning briefing didn&rsquo;t fire at 06:15, so the network has been down for at least two hours.</p>
+<p>Walking down the hall to let the doggo out, a quick glance shows all of the lights on the rack are lit up, so I&rsquo;ve got power.  No notice from my ISP or power utility regarding any sort of outage.  I can&rsquo;t get any sort of connection to anything internal or external with my phone while having my coffee.  I check my DNS settings on my phone&hellip; my secondary server isn&rsquo;t on the list.  I add Quad9, boom, I&rsquo;ve got network.  It&rsquo;s always DNS folks (until it&rsquo;s not).</p>
+<p>I&rsquo;ll dig into the UDM and correct my DNS settings.  It turns out I applied Quad9 as my backup server on the UDM ISP settings, but each VLAN also had their own settings defined with only the Pi-hole being listed.  I&rsquo;ll go through and remove those per-VLAN custom settings.</p>
+<p>The Pi that runs my Pi-hole, Ecowitt ingest, manual event logging API, NWS scrapers, and daily briefing was running the OS from the SD card that came with it.  When using Pi-hole, SD cards aren&rsquo;t huge fans of all of the read/write action going on, and with running other heavy read/write services on top of that, so it&rsquo;s likely the SD card corrupted.</p>
+<p>Past me was ambitious and was thinking I&rsquo;d build faster than I have, so I&rsquo;ve got a second 8 GB Pi5 laying around.  I ordered SSDs and active coolers for both Pis as the plan was to boot from the SSDs and put them in my 1U GeeekPi chassis and run the two Pis as an HA pair.  A while ago, I built the second Pi with the active cooler and SSD installed, and put it in the chassis, I just hadn&rsquo;t gotten around to the configuration yet.  I guess today is that day.</p>
+<h3 id="correcting-dns">Correcting DNS<a hidden class="anchor" aria-hidden="true" href="#correcting-dns">#</a></h3>
+<p>First, I&rsquo;ll manually modify the DNS settings on my laptop to use Quad9 so I can connect to my password manager and be able to get into all my devices.  This will allow me to log into my UDM to correct the DNS issue.</p>
+<p>I&rsquo;ll go to Settings &gt; Internet &gt; WAN1 and make sure my &ldquo;global&rdquo; DNS settings are correct.  I&rsquo;ll change my primary DNS server to the IP that the new Pi will have, and leave Quad9 as my backup for now.</p>
+<p>Now, I&rsquo;ll go through each VLAN and remove the custom DNS settings for each VLAN and have them rely on the &ldquo;global&rdquo; DNS config from the WAN1 interface.</p>
+<h3 id="pi-configuration">Pi Configuration<a hidden class="anchor" aria-hidden="true" href="#pi-configuration">#</a></h3>
+<p>Now that DNS is using Quad9 as the backup for now and the network is functional, I&rsquo;ll dig into configuring the new Pi.</p>
+<p>I&rsquo;ll grab the supplied SD card, and reimage it with Raspberry Pi Imager using Raspberry Pi OS Lite 64-bit, give it a hostname and enable SSH so I can run it headless from the start instead of having to hook up a monitor and keyboard.  I&rsquo;ll also grab the public SSH key that I used with the old Pi to use on this one for now.  I&rsquo;ll make a new pair for the old Pi when I bring that one back up later.</p>
+<p>Now that I&rsquo;ve got my hostname, user, and SSH configured and formatted, I&rsquo;ll pop the SD card into the new Pi, connect power, and make an Ethernet cable to connect to the pre-configured switch port.</p>
+<p>While I&rsquo;m waiting for the Pi to do its thing on first boot, I&rsquo;ll check Grafana, and it looks like the Pi went down between 03:00 and 04:00.  I&rsquo;ll make an annotation on one of my graphs to note the time of the Pi SD card corruption.</p>
+<p>At this point, I&rsquo;ve tried creating images multiple times and each time I&rsquo;m having my SSH connections refused.  I&rsquo;ve double checked my firewall rules and I should be able to SSH into the Pi.  The connection refused error indicates an issue with the Pi anyway, not the network.</p>
+<p>After some searching, I&rsquo;ve found the solution is to manually add an ssh file with no extension to the boot partition.  This is recommended to enable SSH if the imager isn&rsquo;t working properly.  Once the image is created and fresh, I&rsquo;ll open up PowerShell, cd to the SD card, then enter</p>
+<pre tabindex="0"><code>New-Item ssh
+</code></pre><p>No file extension is added here.  I&rsquo;ll eject the SD card, then pop it back in the Pi.</p>
+<p>Ok, I&rsquo;m finally in using SSH and my SSH key.  Now updating the OS isn&rsquo;t working.  It looks like it&rsquo;s trying to use HTTP via port 80, which I&rsquo;m blocking at the firewall, so I&rsquo;ll need to remove that rule at least temporarily.  I had blocked any HTTP traffic using port 80 to prevent unencrypted traffic from entering or leaving my network.  Updates were successful after removing the rule.</p>
+<p>Now I need to check that the SSD is getting power and detected by running:</p>
+<pre tabindex="0"><code>lsblk
+</code></pre><p>I&rsquo;ll copy the OS to the SSD with the command:</p>
+<pre tabindex="0"><code>sudo dd if=/dev/mmcblk0 of=/dev/nvme0n1 bs=4M status=progress 
+</code></pre><p>then change the boot order to boot from the SSD with:</p>
+<pre tabindex="0"><code>sudo raspi-config
+</code></pre><p>I can now boot from the SSD successfully after shutting down and removing the SD card.</p>
+<p>Now I&rsquo;m going to use SCP to copy all of my Python projects.  I&rsquo;m going to start with my Ecowitt ingest service (an API that catches data from my weather station) so I can get data flowing into the database again.  To do that, I&rsquo;ll copy my project folder, create my new venv, create the service and start it.  Then I&rsquo;ll need to point the weather station console to push to the new Pi IP and API endpoint.  I&rsquo;ll also need to modify my firewall rules to allow the weather station console to talk to the new Pi and the new Pi to talk to the database.</p>
+<p>I ran into some issues with getting the <a href="/infrastructure/weather_station">Ecowitt Ingest service</a> back up.  I noticed when pointing the console to the new Pi IP that it had reset itself to point to the Ecowitt servers.  I think what it&rsquo;s doing is if it doesn&rsquo;t get a 200 response from its pushes for a given amount of time, it fails over and starts trying to send data to the Ecowitt cloud.  I reconfigured it and nothing appeared to be saving to the database.  After doing some troubleshooting, I noticed the timestamps from the raw data were &ldquo;2024-01-01 &hellip;&rdquo;.  So I checked my code and found no issues, it&rsquo;s the same code that was working just fine on the old Pi.  Then I checked to make sure the Pi had the correct date and time, which it did.  After rebooting the Ecowitt console, it had the correct timestamps and I can see data in Grafana and the database now.</p>
+<p>Now I&rsquo;ll get my <a href="/services/daily_briefing">Daily Briefing</a> and <a href="/services/timescaledb">NWS scrapers</a> up and running.  These follow the same process as the Ecowitt ingest with the exception that these two run as cron jobs instead of services.  Then finally I&rsquo;ll set up my <a href="/services/manual_events">Manual Event Logging service</a> with the same process.  After setting up each service, I test them to verify they&rsquo;re working properly before moving on to the next.</p>
+<p>Now I&rsquo;ll set up logrotate for all of the log files each project drops.  I can do them all in one shot with the following config at path &ldquo;/etc/logrotate.d/piservices&rdquo; (using sudo nano):</p>
+<pre tabindex="0"><code>/opt/ecowitt/error.log
+/home/prax/daily_briefing/cron.log
+/home/prax/weather/cron.log {
+    weekly
+    compress
+    delaycompress
+    missingok
+    notifempty
+    rotate 4
+} 
+</code></pre><p>That&rsquo;s all for today, it&rsquo;s been a long day.  Resolving this issue while doing laundry and other chores around the house took basically my whole day.  I still need to install Pi-hole, but that can be a project for another day.  The next chapter in this saga will be removing the old Pi from its case, rebuilding it with the new SSD and active cooler, putting it in the chassis with the new Pi, then configuring Pi-hole and HA.  The plan is to have the two Pis be twins that can take over for each other if one goes down and maybe do some load balancing.  I&rsquo;ll have to do some research and see what would be the best way to go about having some redundancy with this setup.</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/network/">Network</a></li>
+      <li><a href="http://localhost:1313/tags/ecowitt/">Ecowitt</a></li>
+      <li><a href="http://localhost:1313/tags/timescaledb/">Timescaledb</a></li>
+      <li><a href="http://localhost:1313/tags/pi/">Pi</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/data_analysis/initial_analysis/">
+    <span class="title">« Prev</span>
+    <br>
+    <span>Initial Data Analysis</span>
+  </a>
+  <a class="next" href="http://localhost:1313/troubleshooting/outage_20260224/">
+    <span class="title">Next »</span>
+    <br>
+    <span>Unplanned Outage Troubleshooting</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">ScriptedVestige</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

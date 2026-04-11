@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Troubleshooting on ScriptedVestige</title>
+    <link>http://localhost:1313/categories/troubleshooting/</link>
+    <description>Recent content in Troubleshooting on ScriptedVestige</description>
+    <generator>Hugo -- 0.157.0</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 01 Mar 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/categories/troubleshooting/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Network Outage</title>
+      <link>http://localhost:1313/troubleshooting/network_outage_20260301/</link>
+      <pubDate>Sun, 01 Mar 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/troubleshooting/network_outage_20260301/</guid>
+      <description>Never trust SD cards.</description>
+    </item>
+    <item>
+      <title>Unplanned Outage Troubleshooting</title>
+      <link>http://localhost:1313/troubleshooting/outage_20260224/</link>
+      <pubDate>Tue, 24 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/troubleshooting/outage_20260224/</guid>
+      <description>Sometimes other people break things, it&amp;#39;s not always my fault!</description>
+    </item>
+  </channel>
+</rss>

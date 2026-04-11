@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto" data-theme="dark">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Daily Briefing | ScriptedVestige</title>
+<meta name="keywords" content="python, cron">
+<meta name="description" content="An automation to make life easier.">
+<meta name="author" content="ScriptedVestige">
+<link rel="canonical" href="http://localhost:1313/services/daily_briefing/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.a29c24210eb31d9ce56f669c66a35c9c51b17376b7764e336a49af7dec914cf0.css" integrity="sha256-opwkIQ6zHZzlb2acZqNcnFGxc3a3dk4zakmvfeyRTPA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/services/daily_briefing/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><meta property="og:url" content="http://localhost:1313/services/daily_briefing/">
+  <meta property="og:site_name" content="ScriptedVestige">
+  <meta property="og:title" content="Daily Briefing">
+  <meta property="og:description" content="An automation to make life easier.">
+  <meta property="og:locale" content="en-us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="services">
+    <meta property="article:published_time" content="2026-01-03T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-01-03T00:00:00+00:00">
+    <meta property="article:tag" content="Python">
+    <meta property="article:tag" content="Cron">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Daily Briefing">
+<meta name="twitter:description" content="An automation to make life easier.">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Services",
+      "item": "http://localhost:1313/services/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Daily Briefing",
+      "item": "http://localhost:1313/services/daily_briefing/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Daily Briefing",
+  "name": "Daily Briefing",
+  "description": "An automation to make life easier.",
+  "keywords": [
+    "python", "cron"
+  ],
+  "articleBody": "This project started with wanting a way to keep up with cybersecurity news. I started the project with a simple, hard-coded script that let me scrape the RSS feed of one news source. I got distracted with other things and came back to this project months later, but I didn’t forget about the project. While I was busy with other things, I had ideas to make this project better, and I’ve implemented those.\nThis project will likely never actually be complete, but it’s at a good spot where it’s stable and has been doing what I designed it to do and is making my life easier.\nI wanted to make sure that this project wouldn’t become a huge mess. The code might not be perfect or elegant, but I focused on making the project modular and config-driven. Each module has its own JSON config file, which allows me to make changes without having to touch the actual logic of the codebase. Usually. Sometimes I need to change the logic, but that’s pretty rare.\nThis automation runs twice per day, triggered at 06:15 and 12:15 local time by a cron job. The cron job calls a bash script which makes sure the working directory is correct, does some logging, and calls the orchestrator which runs the show. I’ll cover the modules in the order they’re executed by the orchestrator.\nWeather Forecast Module This module is pretty simple. I’m grabbing NWS forecast data for the zone that my workplace exists in. I parse the API response and do two things:\nTake the long description of the forecast and return it as an HTML string to later be inserted into the email module Drop a JSON file for the wardrobe generator module to use I’m at a point now where I have my NWS forecast and severe weather alert scrapers running and saving the data returned to my TimescaleDB database, so I need to change this module to simply pull from the DB instead of hitting NWS an additional time, but that’s lower on my list of priorities right now.\nWardrobe Generator Module This module currently accounts for roughly 25% of the codebase. Each Sunday, this module looks at the weather forecast JSON file dropped by the weather module and creates a schedule for the entire work week. Wardrobe inventory and rules are stored in a wardrobe config JSON file. Here’s the process:\nA copy of the wardrobe inventory from the config file is stored as a variable. Feels Like temperature is calculated for each day. Days are given a score based on the forecast, the days with the worst weather will be built first. Boot type (wet vs dry weather) is chosen based on precipitation chance. Boot color is chosen, belt is chosen to match boots. Chinos are chosen based on boot color. Chinos chosen are removed from inventory. Shirt type is chosen based on the temperature. Shirt color is chosen based on chino color. Shirt chosen is removed from inventory. Whether a jacket is necessary is based on precipitation chance and temperature. Once the weekly schedule is created on Sunday, it is sent as an additional email using the emailer module. The schedule can be completely rebuilt by manually running the module by itself and adding a “–rebuild” flag. I can also use nano to edit the JSON if I only want to make small changes. Once the schedule is locked in, an updated copy can be emailed by using the “–preview” flag.\nEach workday, the wardrobe generator pulls the build for that day and double checks whether the items selected are still appropriate for the most current forecast. If any of the items are deemed inappropriate for the updated forecast, a copy of the inventory is made, and items from all other days are removed from the inventory before picking new item(s) for the current day. Once the build for the day is confirmed, the data is formatted as an HTML string and returned to the orchestrator.\nThis module only runs in the morning and returns none for the midday run. The midday HTML template does not contain a wardrobe section anyway.\nThe wardrobe logic is all here if you want to check it out on my GitHub!\nCybersecurity News Module This module grabs RSS feed URLs from its configuration file and uses the FeedParser package to pull the news data. The time period checked is midnight of the day prior to current time, a 48 hour period. Doing this minimizes any missed articles. The articles are checked to see if they contain any of the keywords from the list in the config file. If keywords are found, the title is checked to see if it has already been sent in the previous 48 hours. Only after passing those checks is the article saved to the day’s JSON file. The title, description, and link of all articles are formatted as an HTML string and returned to the orchestrator.\nCVE Module This module operates similarly to the news module, but for CVEs. There are some more filters on this one though. It looks not only at the date and for keywords in the description and publisher, but it is also checking for the status to be analyzed and severity to be high or critical. This module also keeps a JSON with previously sent CVEs to prevent re-sending the same CVEs repeatedly. The ID, status, keyword, and description of all CVEs are formatted as an HTML string and returned to the orchestrator.\nBetween this module and the RSS scraper, I am able to keep up with the quickly changing cyber landscape. Due to the filters though, I can pull the signal from the noise and filter out anything that is irrelevant to my personal and work operations.\nEmail \u0026 Encryption Modules These modules work together and handle formatting and delivery of the emails. First, the emailer module will take all of the HTML strings returned by the other modules, select the appropriate HTML template, and inject the data into the template. After that, the encryption module is called which decrypts the SMTP configuration information. The emailer then connects to my email provider using SMTP with TLS encryption and sends the modified HTML template. A copy of the modified template is also saved in case troubleshooting needs to be performed. The credentials are re-encrypted and memory is cleared to ensure the SMTP creds aren’t sitting around longer than necessary.\nI’ve used an email provider to set up email for this domain, so I configured SPF, DKIM, and DMARC as part of this project as well. The provider I use makes it very simple, they walk you through the steps to create the DNS entries and give you the values to copy and paste. You can use tools like MXToolbox to ensure that your DNS entries have been set up properly. I’ve been using these twice daily deliveries to warm up my domain’s email reputation for months even before the blog was live.\nThe Cleaner All of these modules wind up saving quite a few files. They’re not huge files, but left unchecked, things get messy. The cleaner module runs every Saturday morning and simply cleans up all of the JSON and HTML files that are older than 48 hours and no longer needed. I leave the files from the last 48 hours so I don’t get flooded with repeat news articles and CVEs.\nFile \u0026 Time Utilities Each module imports what it needs from the file and time utilities modules to get file paths and commonly used time formats.\nFuture Plans As mentioned earlier, I need to change the weather module to pull from the database. This will reduce the number of times I’m calling NWS. Due to the modular nature of this project, I’ve been able to copy and modify certain modules to work with other projects, which has been very nice. At this point, I can add or remove any module without issue. I’ll likely add some modules that add sections for irrigation schedules, severe weather alerts, whatever else comes mind.\nTemplates Here are some snips of the templates with the placeholders for the data to be injected. Adding the “Unsubscribe” button was due to the emails being sent to my spam folder. I read some email providers don’t like it when newsletter type emails don’t have an unsubscribe button. After adding the button (which doesn’t do anything, btw), my emails went to the inbox.\nThe midday briefing does not have the wardrobe section as mentioned previously.\nThe data is injected into the placeholder in the wardrobe preview template, with a header for each workday, the categories below it, and spacing between each day.\n",
+  "wordCount" : "1453",
+  "inLanguage": "en",
+  "datePublished": "2026-01-03T00:00:00Z",
+  "dateModified": "2026-01-03T00:00:00Z",
+  "author":{
+    "@type": "Person",
+    "name": "ScriptedVestige"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/services/daily_briefing/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "ScriptedVestige",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="ScriptedVestige (Alt + H)">ScriptedVestige</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/infrastructure/" title="Infrastructure">
+                    <span>Infrastructure</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/services/" title="Services">
+                    <span>Services</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/data_analysis/" title="Data Analysis">
+                    <span>Data Analysis</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/troubleshooting/" title="Troubleshooting">
+                    <span>Troubleshooting</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <div class="breadcrumbs"><a href="http://localhost:1313/">Home</a>&nbsp;»&nbsp;<a href="http://localhost:1313/services/">Services</a></div>
+    <h1 class="post-title entry-hint-parent">
+      Daily Briefing
+    </h1>
+    <div class="post-description">
+      An automation to make life easier.
+    </div>
+    <div class="post-meta"><span title='2026-01-03 00:00:00 +0000 UTC'>January 3, 2026</span>&nbsp;·&nbsp;<span>7 min</span>&nbsp;·&nbsp;<span>ScriptedVestige</span>
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#weather-forecast-module" aria-label="Weather Forecast Module">Weather Forecast Module</a></li>
+                <li>
+                    <a href="#wardrobe-generator-module" aria-label="Wardrobe Generator Module">Wardrobe Generator Module</a></li>
+                <li>
+                    <a href="#cybersecurity-news-module" aria-label="Cybersecurity News Module">Cybersecurity News Module</a></li>
+                <li>
+                    <a href="#cve-module" aria-label="CVE Module">CVE Module</a></li>
+                <li>
+                    <a href="#email--encryption-modules" aria-label="Email &amp; Encryption Modules">Email &amp; Encryption Modules</a></li>
+                <li>
+                    <a href="#the-cleaner" aria-label="The Cleaner">The Cleaner</a></li>
+                <li>
+                    <a href="#file--time-utilities" aria-label="File &amp; Time Utilities">File &amp; Time Utilities</a></li>
+                <li>
+                    <a href="#future-plans" aria-label="Future Plans">Future Plans</a></li>
+                <li>
+                    <a href="#templates" aria-label="Templates">Templates</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><p>This project started with wanting a way to keep up with cybersecurity news.  I started the project with a simple, hard-coded script that let me scrape the RSS feed of one news source.  I got distracted with other things and came back to this project months later, but I didn&rsquo;t forget about the project.  While I was busy with other things, I had ideas to make this project better, and I&rsquo;ve implemented those.</p>
+<p>This project will likely never actually be complete, but it&rsquo;s at a good spot where it&rsquo;s stable and has been doing what I designed it to do and is making my life easier.</p>
+<p>I wanted to make sure that this project wouldn&rsquo;t become a huge mess.  The code might not be perfect or elegant, but I focused on making the project modular and config-driven.  Each module has its own JSON config file, which allows me to make changes without having to touch the actual logic of the codebase.  Usually.  Sometimes I need to change the logic, but that&rsquo;s pretty rare.</p>
+<p>This automation runs twice per day, triggered at 06:15 and 12:15 local time by a cron job.  The cron job calls a bash script which makes sure the working directory is correct, does some logging, and calls the orchestrator which runs the show.  I&rsquo;ll cover the modules in the order they&rsquo;re executed by the orchestrator.</p>
+<h3 id="weather-forecast-module">Weather Forecast Module<a hidden class="anchor" aria-hidden="true" href="#weather-forecast-module">#</a></h3>
+<p>This module is pretty simple.  I&rsquo;m grabbing NWS forecast data for the zone that my workplace exists in.  I parse the API response and do two things:</p>
+<ol>
+<li>Take the long description of the forecast and return it as an HTML string to later be inserted into the email module</li>
+<li>Drop a JSON file for the wardrobe generator module to use</li>
+</ol>
+<p>I&rsquo;m at a point now where I have my NWS forecast and severe weather alert scrapers running and saving the data returned to my TimescaleDB database, so I need to change this module to simply pull from the DB instead of hitting NWS an additional time, but that&rsquo;s lower on my list of priorities right now.</p>
+<h3 id="wardrobe-generator-module">Wardrobe Generator Module<a hidden class="anchor" aria-hidden="true" href="#wardrobe-generator-module">#</a></h3>
+<p>This module currently accounts for roughly 25% of the codebase.  Each Sunday, this module looks at the weather forecast JSON file dropped by the weather module and creates a schedule for the entire work week.  Wardrobe inventory and rules are stored in a wardrobe config JSON file.  Here&rsquo;s the process:</p>
+<ul>
+<li>A copy of the wardrobe inventory from the config file is stored as a variable.</li>
+<li>Feels Like temperature is calculated for each day.</li>
+<li>Days are given a score based on the forecast, the days with the worst weather will be built first.</li>
+<li>Boot type (wet vs dry weather) is chosen based on precipitation chance.</li>
+<li>Boot color is chosen, belt is chosen to match boots.</li>
+<li>Chinos are chosen based on boot color.  Chinos chosen are removed from inventory.</li>
+<li>Shirt type is chosen based on the temperature.</li>
+<li>Shirt color is chosen based on chino color.  Shirt chosen is removed from inventory.</li>
+<li>Whether a jacket is necessary is based on precipitation chance and temperature.</li>
+</ul>
+<p>Once the weekly schedule is created on Sunday, it is sent as an additional email using the emailer module.  The schedule can be completely rebuilt by manually running the module by itself and adding a &ldquo;&ndash;rebuild&rdquo; flag.  I can also use nano to edit the JSON if I only want to make small changes.  Once the schedule is locked in, an updated copy can be emailed by using the &ldquo;&ndash;preview&rdquo; flag.</p>
+<p>Each workday, the wardrobe generator pulls the build for that day and double checks whether the items selected are still appropriate for the most current forecast.  If any of the items are deemed inappropriate for the updated forecast, a copy of the inventory is made, and items from all other days are removed from the inventory before picking new item(s) for the current day.  Once the build for the day is confirmed, the data is formatted as an HTML string and returned to the orchestrator.</p>
+<p>This module only runs in the morning and returns none for the midday run.  The midday HTML template does not contain a wardrobe section anyway.</p>
+<p>The wardrobe logic is all here if you want to check it out on my <a href="https://github.com/scriptedvestige/daily_briefing">GitHub!</a></p>
+<h3 id="cybersecurity-news-module">Cybersecurity News Module<a hidden class="anchor" aria-hidden="true" href="#cybersecurity-news-module">#</a></h3>
+<p>This module grabs RSS feed URLs from its configuration file and uses the FeedParser package to pull the news data.  The time period checked is midnight of the day prior to current time, a 48 hour period.  Doing this minimizes any missed articles.  The articles are checked to see if they contain any of the keywords from the list in the config file.  If keywords are found, the title is checked to see if it has already been sent in the previous 48 hours.  Only after passing those checks is the article saved to the day&rsquo;s JSON file.  The title, description, and link of all articles are formatted as an HTML string and returned to the orchestrator.</p>
+<h3 id="cve-module">CVE Module<a hidden class="anchor" aria-hidden="true" href="#cve-module">#</a></h3>
+<p>This module operates similarly to the news module, but for CVEs.  There are some more filters on this one though.  It looks not only at the date and for keywords in the description and publisher, but it is also checking for the status to be analyzed and severity to be high or critical.  This module also keeps a JSON with previously sent CVEs to prevent re-sending the same CVEs repeatedly.  The ID, status, keyword, and description of all CVEs are formatted as an HTML string and returned to the orchestrator.</p>
+<p>Between this module and the RSS scraper, I am able to keep up with the quickly changing cyber landscape.  Due to the filters though, I can pull the signal from the noise and filter out anything that is irrelevant to my personal and work operations.</p>
+<h3 id="email--encryption-modules">Email &amp; Encryption Modules<a hidden class="anchor" aria-hidden="true" href="#email--encryption-modules">#</a></h3>
+<p>These modules work together and handle formatting and delivery of the emails.  First, the emailer module will take all of the HTML strings returned by the other modules, select the appropriate HTML template, and inject the data into the template.  After that, the encryption module is called which decrypts the SMTP configuration information.  The emailer then connects to my email provider using SMTP with TLS encryption and sends the modified HTML template.  A copy of the modified template is also saved in case troubleshooting needs to be performed.  The credentials are re-encrypted and memory is cleared to ensure the SMTP creds aren&rsquo;t sitting around longer than necessary.</p>
+<p>I&rsquo;ve used an email provider to set up email for this domain, so I configured SPF, DKIM, and DMARC as part of this project as well.  The provider I use makes it very simple, they walk you through the steps to create the DNS entries and give you the values to copy and paste.  You can use tools like MXToolbox to ensure that your DNS entries have been set up properly.  I&rsquo;ve been using these twice daily deliveries to warm up my domain&rsquo;s email reputation for months even before the blog was live.</p>
+<h3 id="the-cleaner">The Cleaner<a hidden class="anchor" aria-hidden="true" href="#the-cleaner">#</a></h3>
+<p>All of these modules wind up saving quite a few files.  They&rsquo;re not huge files, but left unchecked, things get messy.  The cleaner module runs every Saturday morning and simply cleans up all of the JSON and HTML files that are older than 48 hours and no longer needed.  I leave the files from the last 48 hours so I don&rsquo;t get flooded with repeat news articles and CVEs.</p>
+<h3 id="file--time-utilities">File &amp; Time Utilities<a hidden class="anchor" aria-hidden="true" href="#file--time-utilities">#</a></h3>
+<p>Each module imports what it needs from the file and time utilities modules to get file paths and commonly used time formats.</p>
+<h3 id="future-plans">Future Plans<a hidden class="anchor" aria-hidden="true" href="#future-plans">#</a></h3>
+<p>As mentioned earlier, I need to change the weather module to pull from the database.  This will reduce the number of times I&rsquo;m calling NWS.  Due to the modular nature of this project, I&rsquo;ve been able to copy and modify certain modules to work with other projects, which has been very nice.  At this point, I can add or remove any module without issue.  I&rsquo;ll likely add some modules that add sections for irrigation schedules, severe weather alerts, whatever else comes mind.</p>
+<h3 id="templates">Templates<a hidden class="anchor" aria-hidden="true" href="#templates">#</a></h3>
+<p>Here are some snips of the templates with the placeholders for the data to be injected.  Adding the &ldquo;Unsubscribe&rdquo; button was due to the emails being sent to my spam folder.  I read some email providers don&rsquo;t like it when newsletter type emails don&rsquo;t have an unsubscribe button.  After adding the button (which doesn&rsquo;t do anything, btw), my emails went to the inbox.</p>
+<p>The midday briefing does not have the wardrobe section as mentioned previously.</p>
+<p><img alt="Morning Briefing" loading="lazy" src="/services/morning_briefing_template.png"></p>
+<p>The data is injected into the placeholder in the wardrobe preview template, with a header for each workday, the categories below it, and spacing between each day.</p>
+<p><img alt="Weekly Wardrobe Preview" loading="lazy" src="/services/wardrobe_preview_template.png"></p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/python/">Python</a></li>
+      <li><a href="http://localhost:1313/tags/cron/">Cron</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/infrastructure/truenas_config/">
+    <span class="title">« Prev</span>
+    <br>
+    <span>TrueNAS Configuration</span>
+  </a>
+  <a class="next" href="http://localhost:1313/infrastructure/truenas_resurrection/">
+    <span class="title">Next »</span>
+    <br>
+    <span>TrueNAS Resurrection</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">ScriptedVestige</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

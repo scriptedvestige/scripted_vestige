@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto" data-theme="dark">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Initial Data Analysis | ScriptedVestige</title>
+<meta name="keywords" content="data, timescaledb, sql, grafana">
+<meta name="description" content="Pull the signal from the noise.">
+<meta name="author" content="ScriptedVestige">
+<link rel="canonical" href="http://localhost:1313/data_analysis/initial_analysis/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.a29c24210eb31d9ce56f669c66a35c9c51b17376b7764e336a49af7dec914cf0.css" integrity="sha256-opwkIQ6zHZzlb2acZqNcnFGxc3a3dk4zakmvfeyRTPA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/data_analysis/initial_analysis/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><meta property="og:url" content="http://localhost:1313/data_analysis/initial_analysis/">
+  <meta property="og:site_name" content="ScriptedVestige">
+  <meta property="og:title" content="Initial Data Analysis">
+  <meta property="og:description" content="Pull the signal from the noise.">
+  <meta property="og:locale" content="en-us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="data_analysis">
+    <meta property="article:published_time" content="2026-04-11T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-04-11T00:00:00+00:00">
+    <meta property="article:tag" content="Data">
+    <meta property="article:tag" content="Timescaledb">
+    <meta property="article:tag" content="Sql">
+    <meta property="article:tag" content="Grafana">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Initial Data Analysis">
+<meta name="twitter:description" content="Pull the signal from the noise.">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Data Analysis",
+      "item": "http://localhost:1313/data_analysis/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Initial Data Analysis",
+      "item": "http://localhost:1313/data_analysis/initial_analysis/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Initial Data Analysis",
+  "name": "Initial Data Analysis",
+  "description": "Pull the signal from the noise.",
+  "keywords": [
+    "data", "timescaledb", "sql", "grafana"
+  ],
+  "articleBody": "Having a lot of data collected can be a good thing, but it’s important to be able to pull the signal from the noise to be able to act upon the data. What’s the point in collecting all of this data if I’m not going to use it? I’m going to create some materialized views in Timescale that I can query with Grafana that will show me useful data that I can act on.\nAggregates of Observed Data I initially started with pulling raw weather station readings from my five minute intervals into Grafana and displaying them with time series graphs. This was useful, but I decided that I wanted to create some aggregates so I wasn’t pulling so much raw data and my Grafana dashboards would be quick and snappy.\nI decided to make multiple continuous aggregate materialized views for each table in my database. I created views for hourly, daily, weekly, monthly, and yearly periods, then created Grafana dashboards for them. Here’s the query I used to create the daily view, the pattern is the same for all other periods, with the difference being changing the bucket size:\nCREATE MATERIALIZED VIEW weather_hourly_aggs WITH (timescaledb.continuous) AS SELECT time_bucket('1 hour', time) AS period_start, MIN(tempf) as temp_min, MAX(tempf) as temp_max, AVG(tempf) as temp_avg, AVG(humidity) as humidity_avg, AVG(baromabsin) as pressure_avg, AVG(windspeedmph) as windspeed_avg, MAX(windspeedmph) as windspeed_max, MAX(windgustmph) as windgust_max, AVG(solarradiation) as solar_avg, MAX(solarradiation) as solar_max, AVG(uv) as uv_avg, MAX(uv) as uv_max, AVG(eventrainin) as rain_rate_avg, MAX(eventrainin) as rain_rate_max, MAX(eventrainin) - MIN(eventrainin) as rain_total_hour, COUNT(*) as observations_count FROM ws_observations GROUP BY period_start; Once the view is created, I also created policies to automatically update the views. Again, same pattern, just changing time buckets to match the view bucket:\nSELECT add_continuous_aggregate_policy( 'weather_hourly_aggs', start_offset =\u003e INTERVAL '3 hours', end_offset =\u003e INTERVAL '0 minutes', schedule_interval =\u003e INTERVAL '5 minutes' ); And I wind up with some dashboards that look like these:\nSo now I can see my historical observations for my back yard sensors, the console downstairs, and the sensor in my office that hangs on the side of my server rack!\nForecast Drift Analysis I’ve also already created some basic analysis for the forecast data where I’m looking at how much the forecast changes as the target period approaches. I’ve called this my forecast drift analysis, and I’ve got a continuous aggregate materialized view in TimescaleDB that calculates the data, then I hooked that into Grafana to give me a table showing the absolute value deltas comparing T-x hours to T-0. This helps me see how much the forecast for a given date might change based on how many hours out the target period is.\nHere’s how I created the view:\nCREATE MATERIALIZED VIEW home_forecast_drift AS WITH drift AS( SELECT starttime, updated, ROUND(EXTRACT(EPOCH FROM (starttime - updated)) / 3600) AS hours_out, ABS(temp - LAST_VALUE(temp) OVER ( PARTITION BY starttime ORDER BY updated ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING )) as temp_drift, ABS(windspeed - LAST_VALUE(windspeed) OVER ( PARTITION BY starttime ORDER BY updated ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING )) as wind_drift, ABS(precip - LAST_VALUE(precip) OVER ( PARTITION BY starttime ORDER BY updated ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING )) as precip_drift FROM home_forecast WHERE starttime \u003e updated ) SELECT hours_out AS \"Hours Out\", ROUND(AVG(temp_drift)::numeric, 2) AS \"Avg Temp Drift\", ROUND(AVG(wind_drift)::numeric, 2) AS \"Avg Wind Drift\", ROUND(AVG(precip_drift)::numeric, 2) AS \"Avg Precip Drift\", COUNT(*) AS \"Sample Count\" FROM drift GROUP BY \"Hours Out\" ORDER BY \"Hours Out\" DESC; Now, the issue with my Timescale container is that it doesn’t have pg_cron, so I can’t set a cron job within the container to update this view. No problem though, I created a bash script on my Pi to send the refresh command and set that up as a cron job which fires five minutes after my NWS scrapers run.\nAnd here’s the final result in Grafana. While the view calculates the absolute value delta for all hourly periods, I only grabbed 12 hour periods to display in Grafana so the table would be cleaner.\nForecast Accuracy Fast forward to today, and I’m going to set up some views to answer a few more questions:\nHow accurate is the NWS forecast compared to my local microclimate? There are some geographical differences between the NWS station location and my location. I’m about 200 feet up on a hill on the side of the valley, their station appears to be down in the valley itself. How often do I record rain events when the forecast shows a non-zero precipitation chance? This will be useful down the road when I apply ML to my irrigation system to make decisions about whether to run irrigation or not when there is a chance of precipitation in the forecast. Data Formats The forecast data I’m pulling from NWS gives me hourly predictions for a 156 hour window. Each scrape gives me a new set of multiple data points for each of the 156 periods, so I wind up having multiple entries for a given date and hour. So to compare how accurate the forecast is to my observed conditions, I’ll pull the last forecast for the given period to compare to the hourly observations aggregate.\nTemp, Wind, and Humidity I’ll create a view that compares the forecast table values to the continuous aggregates view based on the period start time.\nCREATE MATERIALIZED VIEW forecast_accuracy AS SELECT fc.starttime, EXTRACT(MONTH FROM fc.starttime) AS month, fc.temp AS forecast_temp, obs.temp_avg AS observed_temp, obs.temp_avg - fc.temp AS temp_delta, fc.windspeed AS forecast_wind, obs.windspeed_avg AS observed_wind, obs.windspeed_avg - fc.windspeed AS wind_delta, fc.humidity AS forecast_humidity, obs.humidity_avg AS observed_humidity, obs.humidity_avg - fc.humidity AS humidity_delta FROM ( SELECT DISTINCT ON (starttime) * FROM home_forecast ORDER BY starttime, updated DESC ) fc JOIN weather_hourly_aggs obs ON obs.period_start = fc.starttime WHERE obs.period_start \u003c NOW(); Once I have my view, I can see it’s giving me the data where the observed data is reporting as higher or lower compared to the forecast data, which is the view of things I want.\nNow I’ll create a procedure and schedule it to run hourly to update the view.\nNow that I can see the deltas for individual days, I’m going to give myself a summary view that averages the deltas and divvies them up by month.\nCREATE VIEW forecast_accuracy_monthly AS SELECT EXTRACT(YEAR FROM starttime) as year, month, ROUND(AVG(temp_delta)::numeric, 2) AS avg_temp_delta, ROUND(AVG(wind_delta)::numeric, 2) AS avg_wind_delta, ROUND(AVG(humidity_delta)::numeric, 2) AS avg_humidity_delta, COUNT(*) AS sample_count FROM forecast_accuracy GROUP BY year, month ORDER BY year, month; That gives me a view that looks like this:\nThis data is interesting because I currently have my weather station mounted in a temporary location that is a bit sheltered by the house. I plan on moving the station when the weather is more suitable for digging to a 4\"x6\"x10’ post sunk 2’ and cemented into a location more centered in the open area of the back yard which will give me different, more accurate readings. Because this is a regular view, I don’t need to create a procedure or refresh job, it will recalculate every time it’s queried.\nSo now I’ll pop over to Grafana and make a dashboard to visualize the data.\nAnd here’s the quick and dirty dashboard that I’ll polish later:\nPrecipitation The last thing I want to do for today is to see how often I record rain events on days that are forecast have a non-zero precipitation chance. I’ll use the same two table and view as with the temp, wind, and humidity deltas, but this time flagging whether I recorded rain for a given hourly period.\nCREATE MATERIALIZED VIEW precip_accuracy AS SELECT fc.starttime, EXTRACT(YEAR FROM fc.starttime) AS year, EXTRACT(MONTH FROM fc.starttime) AS month, fc.precip as forecast_pop, CASE WHEN fc.precip BETWEEN 1 AND 25 THEN '1-25%' WHEN fc.precip BETWEEN 26 AND 50 THEN '26-50%' WHEN fc.precip BETWEEN 51 AND 75 THEN '51-75%' WHEN fc.precip BETWEEN 76 AND 100 THEN '76-100%' END AS pop_bucket, obs.rain_total_hour AS observed_precip, CASE WHEN obs.rain_total_hour \u003e 0 THEN true ELSE false END AS did_rain FROM ( SELECT DISTINCT ON (starttime) * FROM home_forecast ORDER BY starttime, updated DESC ) fc JOIN weather_hourly_aggs obs ON obs.period_start = fc.starttime WHERE fc.precip \u003e 0 AND obs.period_start \u003c NOW(); Because this one is a materialized view, I’ll create a procedure and job to refresh it every hour.\nCREATE OR REPLACE PROCEDURE refresh_precip_accuracy(jobid int, config jsonb) LANGUAGE SQL AS $$ REFRESH MATERIALIZED VIEW precip_accuracy; $$; SELECT add_job('refresh_precip_accuracy', '1 hour'); Then I’ll create the monthly summary like I did for the deltas.\nCREATE VIEW precip_accuracy_summary AS SELECT year, month, pop_bucket, COUNT(*) as total_hours, SUM(CASE WHEN did_rain THEN 1 ELSE 0 END) AS hours_rained, ROUND((SUM(CASE WHEN did_rain THEN 1 ELSE 0 END)::numeric / COUNT(*)) * 100, 1) AS pct_accurate FROM precip_accuracy GROUP BY year, month, pop_bucket ORDER BY year, month, pop_bucket; And finally, I’ll create a view that shows me when rain was not forecast but a rain event was recorded.\nCREATE VIEW precip_surprise AS SELECT fc.starttime, EXTRACT(YEAR FROM fc.starttime) AS year, EXTRACT(MONTH FROM fc.starttime) AS month, obs.rain_total_hour AS observed_precip FROM ( SELECT DISTINCT ON (starttime) * FROM home_forecast ORDER BY starttime, updated DESC ) fc JOIN weather_hourly_aggs obs ON obs.period_start = fc.starttime WHERE fc.precip = 0 AND obs.rain_total_hour \u003e 0 AND obs.period_start \u003c NOW(); And finally, I’ll hop back into Grafana to create some dashboard panels.\nAgain, these are quick and dirty dashboards that I’ll polish later as I have time, but they get the job done and are displaying my data to help me make decisions about when to water my plants (or right now with my grape vines still in buckets and not in their permanent containers, when to bring them into the garage to avoid a freeze and when to plant them in their permanent containers).\n",
+  "wordCount" : "1617",
+  "inLanguage": "en",
+  "datePublished": "2026-04-11T00:00:00Z",
+  "dateModified": "2026-04-11T00:00:00Z",
+  "author":{
+    "@type": "Person",
+    "name": "ScriptedVestige"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/data_analysis/initial_analysis/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "ScriptedVestige",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="ScriptedVestige (Alt + H)">ScriptedVestige</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/infrastructure/" title="Infrastructure">
+                    <span>Infrastructure</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/services/" title="Services">
+                    <span>Services</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/data_analysis/" title="Data Analysis">
+                    <span>Data Analysis</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/troubleshooting/" title="Troubleshooting">
+                    <span>Troubleshooting</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <div class="breadcrumbs"><a href="http://localhost:1313/">Home</a>&nbsp;»&nbsp;<a href="http://localhost:1313/data_analysis/">Data Analysis</a></div>
+    <h1 class="post-title entry-hint-parent">
+      Initial Data Analysis
+    </h1>
+    <div class="post-description">
+      Pull the signal from the noise.
+    </div>
+    <div class="post-meta"><span title='2026-04-11 00:00:00 +0000 UTC'>April 11, 2026</span>&nbsp;·&nbsp;<span>8 min</span>&nbsp;·&nbsp;<span>ScriptedVestige</span>
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#aggregates-of-observed-data" aria-label="Aggregates of Observed Data">Aggregates of Observed Data</a></li>
+                <li>
+                    <a href="#forecast-drift-analysis" aria-label="Forecast Drift Analysis">Forecast Drift Analysis</a></li>
+                <li>
+                    <a href="#forecast-accuracy" aria-label="Forecast Accuracy">Forecast Accuracy</a><ul>
+                        <ul>
+                        
+                <li>
+                    <a href="#data-formats" aria-label="Data Formats">Data Formats</a></li>
+                <li>
+                    <a href="#temp-wind-and-humidity" aria-label="Temp, Wind, and Humidity">Temp, Wind, and Humidity</a></li>
+                <li>
+                    <a href="#precipitation" aria-label="Precipitation">Precipitation</a>
+                </li>
+            </ul>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><p>Having a lot of data collected can be a good thing, but it&rsquo;s important to be able to pull the signal from the noise to be able to act upon the data.  What&rsquo;s the point in collecting all of this data if I&rsquo;m not going to use it?  I&rsquo;m going to create some materialized views in Timescale that I can query with Grafana that will show me useful data that I can act on.</p>
+<h3 id="aggregates-of-observed-data">Aggregates of Observed Data<a hidden class="anchor" aria-hidden="true" href="#aggregates-of-observed-data">#</a></h3>
+<p>I initially started with pulling raw weather station readings from my five minute intervals into Grafana and displaying them with time series graphs.  This was useful, but I decided that I wanted to create some aggregates so I wasn&rsquo;t pulling so much raw data and my Grafana dashboards would be quick and snappy.</p>
+<p>I decided to make multiple continuous aggregate materialized views for each table in my database.  I created views for hourly, daily, weekly, monthly, and yearly periods, then created Grafana dashboards for them.  Here&rsquo;s the query I used to create the daily view, the pattern is the same for all other periods, with the difference being changing the bucket size:</p>
+<pre tabindex="0"><code>CREATE MATERIALIZED VIEW weather_hourly_aggs
+WITH (timescaledb.continuous) AS
+SELECT
+    time_bucket(&#39;1 hour&#39;, time) AS period_start,
+    MIN(tempf) as temp_min,
+    MAX(tempf) as temp_max,
+    AVG(tempf) as temp_avg,
+    
+    AVG(humidity) as humidity_avg,
+    
+    AVG(baromabsin) as pressure_avg,
+    
+    AVG(windspeedmph) as windspeed_avg,
+    MAX(windspeedmph) as windspeed_max,
+    MAX(windgustmph) as windgust_max,
+    
+    AVG(solarradiation) as solar_avg,
+    MAX(solarradiation) as solar_max,
+    
+    AVG(uv) as uv_avg,
+    MAX(uv) as uv_max,
+    
+    AVG(eventrainin) as rain_rate_avg,
+    MAX(eventrainin) as rain_rate_max,
+    MAX(eventrainin) - MIN(eventrainin) as rain_total_hour,
+    
+    COUNT(*) as observations_count
+    
+FROM ws_observations
+GROUP BY period_start;
+</code></pre><p>Once the view is created, I also created policies to automatically update the views.  Again, same pattern, just changing time buckets to match the view bucket:</p>
+<pre tabindex="0"><code>SELECT add_continuous_aggregate_policy(
+    &#39;weather_hourly_aggs&#39;,
+    start_offset =&gt; INTERVAL &#39;3 hours&#39;,
+    end_offset =&gt; INTERVAL &#39;0 minutes&#39;,
+    schedule_interval =&gt; INTERVAL &#39;5 minutes&#39;
+);
+</code></pre><p>And I wind up with some dashboards that look like these:</p>
+<p><img alt="Hourly Aggs" loading="lazy" src="/services/grafana_hourly_aggs.png"></p>
+<p><img alt="Daily Aggs" loading="lazy" src="/services/grafana_daily_aggs.png"></p>
+<p><img alt="Weekly Aggs" loading="lazy" src="/services/grafana_weekly_aggs.png"></p>
+<p><img alt="Monthly Aggs" loading="lazy" src="/services/grafana_monthly_aggs.png"></p>
+<p><img alt="Yearly Aggs" loading="lazy" src="/services/grafana_yearly_aggs.png"></p>
+<p>So now I can see my historical observations for my back yard sensors, the console downstairs, and the sensor in my office that hangs on the side of my server rack!</p>
+<h3 id="forecast-drift-analysis">Forecast Drift Analysis<a hidden class="anchor" aria-hidden="true" href="#forecast-drift-analysis">#</a></h3>
+<p>I&rsquo;ve also already created some basic analysis for the forecast data where I&rsquo;m looking at how much the forecast changes as the target period approaches.  I&rsquo;ve called this my forecast drift analysis, and I&rsquo;ve got a continuous aggregate materialized view in TimescaleDB that calculates the data, then I hooked that into Grafana to give me a table showing the absolute value deltas comparing T-x hours to T-0.  This helps me see how much the forecast for a given date might change based on how many hours out the target period is.</p>
+<p>Here&rsquo;s how I created the view:</p>
+<pre tabindex="0"><code>CREATE MATERIALIZED VIEW home_forecast_drift AS
+WITH drift AS(
+    SELECT
+        starttime,
+        updated,
+        ROUND(EXTRACT(EPOCH FROM (starttime - updated)) / 3600) AS hours_out,
+        ABS(temp - LAST_VALUE(temp) OVER (
+            PARTITION BY starttime ORDER BY updated
+            ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        )) as temp_drift,
+        ABS(windspeed - LAST_VALUE(windspeed) OVER (
+            PARTITION BY starttime ORDER BY updated
+            ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        )) as wind_drift,
+        ABS(precip - LAST_VALUE(precip) OVER (
+            PARTITION BY starttime ORDER BY updated
+            ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        )) as precip_drift
+    FROM home_forecast
+    WHERE starttime &gt; updated
+)
+SELECT
+    hours_out AS &#34;Hours Out&#34;,
+    ROUND(AVG(temp_drift)::numeric, 2) AS &#34;Avg Temp Drift&#34;,
+    ROUND(AVG(wind_drift)::numeric, 2) AS &#34;Avg Wind Drift&#34;,
+    ROUND(AVG(precip_drift)::numeric, 2) AS &#34;Avg Precip Drift&#34;,
+    COUNT(*) AS &#34;Sample Count&#34;
+FROM drift
+GROUP BY &#34;Hours Out&#34;
+ORDER BY &#34;Hours Out&#34; DESC;
+</code></pre><p>Now, the issue with my Timescale container is that it doesn&rsquo;t have pg_cron, so I can&rsquo;t set a cron job within the container to update this view.  No problem though, I created a bash script on my Pi to send the refresh command and set that up as a cron job which fires five minutes after my NWS scrapers run.</p>
+<p><img alt="View Refresh" loading="lazy" src="/services/bash_view_refresh.png"></p>
+<p>And here&rsquo;s the final result in Grafana.  While the view calculates the absolute value delta for all hourly periods, I only grabbed 12 hour periods to display in Grafana so the table would be cleaner.</p>
+<p><img alt="Grafana Drift Query" loading="lazy" src="/services/grafana_drift_analysis_query.png"></p>
+<p><img alt="Forecast Drift Analysis" loading="lazy" src="/services/grafana_forecast_drift.png"></p>
+<h3 id="forecast-accuracy">Forecast Accuracy<a hidden class="anchor" aria-hidden="true" href="#forecast-accuracy">#</a></h3>
+<p>Fast forward to today, and I&rsquo;m going to set up some views to answer a few more questions:</p>
+<ul>
+<li>How accurate is the NWS forecast compared to my local microclimate?
+<ul>
+<li>There are some geographical differences between the NWS station location and my location.  I&rsquo;m about 200 feet up on a hill on the side of the valley, their station appears to be down in the valley itself.</li>
+</ul>
+</li>
+<li>How often do I record rain events when the forecast shows a non-zero precipitation chance?
+<ul>
+<li>This will be useful down the road when I apply ML to my irrigation system to make decisions about whether to run irrigation or not when there is a chance of precipitation in the forecast.</li>
+</ul>
+</li>
+</ul>
+<h5 id="data-formats">Data Formats<a hidden class="anchor" aria-hidden="true" href="#data-formats">#</a></h5>
+<p>The forecast data I&rsquo;m pulling from NWS gives me hourly predictions for a 156 hour window.  Each scrape gives me a new set of multiple data points for each of the 156 periods, so I wind up having multiple entries for a given date and hour.  So to compare how accurate the forecast is to my observed conditions, I&rsquo;ll pull the last forecast for the given period to compare to the hourly observations aggregate.</p>
+<h5 id="temp-wind-and-humidity">Temp, Wind, and Humidity<a hidden class="anchor" aria-hidden="true" href="#temp-wind-and-humidity">#</a></h5>
+<p>I&rsquo;ll create a view that compares the forecast table values to the continuous aggregates view based on the period start time.</p>
+<pre tabindex="0"><code>CREATE MATERIALIZED VIEW forecast_accuracy AS
+SELECT
+    fc.starttime,
+    EXTRACT(MONTH FROM fc.starttime) AS month,
+
+    fc.temp AS forecast_temp,
+    obs.temp_avg AS observed_temp,
+    obs.temp_avg - fc.temp AS temp_delta,
+
+    fc.windspeed AS forecast_wind,
+    obs.windspeed_avg AS observed_wind,
+    obs.windspeed_avg - fc.windspeed AS wind_delta,
+
+    fc.humidity AS forecast_humidity,
+    obs.humidity_avg AS observed_humidity,
+    obs.humidity_avg - fc.humidity AS humidity_delta
+FROM (
+    SELECT DISTINCT ON (starttime) *
+    FROM home_forecast
+    ORDER BY starttime, updated DESC
+) fc
+JOIN weather_hourly_aggs obs ON obs.period_start = fc.starttime
+WHERE obs.period_start &lt; NOW();
+</code></pre><p>Once I have my view, I can see it&rsquo;s giving me the data where the observed data is reporting as higher or lower compared to the forecast data, which is the view of things I want.</p>
+<p><img alt="Forecast Accuracy Sample" loading="lazy" src="/services/forecast_accuracy_sample.png"></p>
+<p>Now I&rsquo;ll create a procedure and schedule it to run hourly to update the view.</p>
+<p><img alt="Accuracy Procedure" loading="lazy" src="/services/accuracy_procedure.png"></p>
+<p>Now that I can see the deltas for individual days, I&rsquo;m going to give myself a summary view that averages the deltas and divvies them up by month.</p>
+<pre tabindex="0"><code>CREATE VIEW forecast_accuracy_monthly AS
+SELECT
+    EXTRACT(YEAR FROM starttime) as year,
+    month,
+    ROUND(AVG(temp_delta)::numeric, 2) AS avg_temp_delta,
+    ROUND(AVG(wind_delta)::numeric, 2) AS avg_wind_delta,
+    ROUND(AVG(humidity_delta)::numeric, 2) AS avg_humidity_delta,
+    COUNT(*) AS sample_count
+FROM forecast_accuracy
+GROUP BY year, month
+ORDER BY year, month;
+</code></pre><p>That gives me a view that looks like this:</p>
+<p><img alt="Accuracy Summary" loading="lazy" src="/services/accuracy_summary.png"></p>
+<p>This data is interesting because I currently have my weather station mounted in a temporary location that is a bit sheltered by the house.  I plan on moving the station when the weather is more suitable for digging to a 4&quot;x6&quot;x10&rsquo; post sunk 2&rsquo; and cemented into a location more centered in the open area of the back yard which will give me different, more accurate readings.  Because this is a regular view, I don&rsquo;t need to create a procedure or refresh job, it will recalculate every time it&rsquo;s queried.</p>
+<p>So now I&rsquo;ll pop over to Grafana and make a dashboard to visualize the data.</p>
+<p><img alt="Daily Accuracy" loading="lazy" src="/services/grafana_daily_accuracy.png"></p>
+<p><img alt="Monthly Accuracy" loading="lazy" src="/services/grafana_monthly_accuracy.png"></p>
+<p>And here&rsquo;s the quick and dirty dashboard that I&rsquo;ll polish later:</p>
+<p><img alt="Grafana Accuracy Dashboard" loading="lazy" src="/services/grafana_accuracy_dashboard.png"></p>
+<h5 id="precipitation">Precipitation<a hidden class="anchor" aria-hidden="true" href="#precipitation">#</a></h5>
+<p>The last thing I want to do for today is to see how often I record rain events on days that are forecast have a non-zero precipitation chance.  I&rsquo;ll use the same two table and view as with the temp, wind, and humidity deltas, but this time flagging whether I recorded rain for a given hourly period.</p>
+<pre tabindex="0"><code>CREATE MATERIALIZED VIEW precip_accuracy AS
+SELECT
+    fc.starttime,
+    EXTRACT(YEAR FROM fc.starttime) AS year,
+    EXTRACT(MONTH FROM fc.starttime) AS month,
+    fc.precip as forecast_pop,
+    CASE
+        WHEN fc.precip BETWEEN 1 AND 25 THEN &#39;1-25%&#39;
+        WHEN fc.precip BETWEEN 26 AND 50 THEN &#39;26-50%&#39;
+        WHEN fc.precip BETWEEN 51 AND 75 THEN &#39;51-75%&#39;
+        WHEN fc.precip BETWEEN 76 AND 100 THEN &#39;76-100%&#39;
+    END AS pop_bucket,
+    obs.rain_total_hour AS observed_precip,
+    CASE WHEN obs.rain_total_hour &gt; 0 THEN true ELSE false END AS did_rain
+FROM (
+    SELECT DISTINCT ON (starttime) *
+    FROM home_forecast
+    ORDER BY starttime, updated DESC
+) fc
+JOIN weather_hourly_aggs obs ON obs.period_start = fc.starttime
+WHERE fc.precip &gt; 0
+AND obs.period_start &lt; NOW();
+</code></pre><p>Because this one is a materialized view, I&rsquo;ll create a procedure and job to refresh it every hour.</p>
+<pre tabindex="0"><code>CREATE OR REPLACE PROCEDURE refresh_precip_accuracy(jobid int, config jsonb)
+    LANGUAGE SQL AS $$
+        REFRESH MATERIALIZED VIEW precip_accuracy;
+    $$;
+</code></pre><pre tabindex="0"><code>SELECT add_job(&#39;refresh_precip_accuracy&#39;, &#39;1 hour&#39;);
+</code></pre><p>Then I&rsquo;ll create the monthly summary like I did for the deltas.</p>
+<pre tabindex="0"><code>CREATE VIEW precip_accuracy_summary AS
+SELECT
+    year,
+    month,
+    pop_bucket,
+    COUNT(*) as total_hours,
+    SUM(CASE WHEN did_rain THEN 1 ELSE 0 END) AS hours_rained,
+    ROUND((SUM(CASE WHEN did_rain THEN 1 ELSE 0 END)::numeric / COUNT(*)) * 100, 1) AS pct_accurate
+FROM precip_accuracy
+GROUP BY year, month, pop_bucket
+ORDER BY year, month, pop_bucket;
+</code></pre><p>And finally, I&rsquo;ll create a view that shows me when rain was not forecast but a rain event was recorded.</p>
+<pre tabindex="0"><code>CREATE VIEW precip_surprise AS
+SELECT
+    fc.starttime,
+    EXTRACT(YEAR FROM fc.starttime) AS year,
+    EXTRACT(MONTH FROM fc.starttime) AS month,
+    obs.rain_total_hour AS observed_precip
+FROM (
+    SELECT DISTINCT ON (starttime) *
+    FROM home_forecast
+    ORDER BY starttime, updated DESC
+) fc
+JOIN weather_hourly_aggs obs ON obs.period_start = fc.starttime
+WHERE fc.precip = 0
+AND obs.rain_total_hour &gt; 0
+AND obs.period_start &lt; NOW();
+</code></pre><p>And finally, I&rsquo;ll hop back into Grafana to create some dashboard panels.</p>
+<p><img alt="Hourly Precip Accuracy" loading="lazy" src="/services/grafana_precip_acc_hourly.png"></p>
+<p><img alt="Monthly Precip Accuracy" loading="lazy" src="/services/grafana_precip_acc_monthly.png"></p>
+<p><img alt="Precip Surprise!" loading="lazy" src="/services/grafana_precip_surprise.png"></p>
+<p>Again, these are quick and dirty dashboards that I&rsquo;ll polish later as I have time, but they get the job done and are displaying my data to help me make decisions about when to water my plants (or right now with my grape vines still in buckets and not in their permanent containers, when to bring them into the garage to avoid a freeze and when to plant them in their permanent containers).</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/data/">Data</a></li>
+      <li><a href="http://localhost:1313/tags/timescaledb/">Timescaledb</a></li>
+      <li><a href="http://localhost:1313/tags/sql/">Sql</a></li>
+      <li><a href="http://localhost:1313/tags/grafana/">Grafana</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="next" href="http://localhost:1313/troubleshooting/network_outage_20260301/">
+    <span class="title">Next »</span>
+    <br>
+    <span>Network Outage</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">ScriptedVestige</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

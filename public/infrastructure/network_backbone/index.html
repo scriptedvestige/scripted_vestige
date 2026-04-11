@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto" data-theme="dark">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Network Backbone | ScriptedVestige</title>
+<meta name="keywords" content="network, ubiquiti, vlans">
+<meta name="description" content="Install and configuration of home lab networking gear.">
+<meta name="author" content="ScriptedVestige">
+<link rel="canonical" href="http://localhost:1313/infrastructure/network_backbone/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.a29c24210eb31d9ce56f669c66a35c9c51b17376b7764e336a49af7dec914cf0.css" integrity="sha256-opwkIQ6zHZzlb2acZqNcnFGxc3a3dk4zakmvfeyRTPA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/infrastructure/network_backbone/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "light") {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><meta property="og:url" content="http://localhost:1313/infrastructure/network_backbone/">
+  <meta property="og:site_name" content="ScriptedVestige">
+  <meta property="og:title" content="Network Backbone">
+  <meta property="og:description" content="Install and configuration of home lab networking gear.">
+  <meta property="og:locale" content="en-us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="infrastructure">
+    <meta property="article:published_time" content="2026-01-01T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-01-01T00:00:00+00:00">
+    <meta property="article:tag" content="Network">
+    <meta property="article:tag" content="Ubiquiti">
+    <meta property="article:tag" content="Vlans">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Network Backbone">
+<meta name="twitter:description" content="Install and configuration of home lab networking gear.">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Infrastructure",
+      "item": "http://localhost:1313/infrastructure/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Network Backbone",
+      "item": "http://localhost:1313/infrastructure/network_backbone/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Network Backbone",
+  "name": "Network Backbone",
+  "description": "Install and configuration of home lab networking gear.",
+  "keywords": [
+    "network", "ubiquiti", "vlans"
+  ],
+  "articleBody": "To start my home lab journey, I decided to rebuild my network from scratch with some equipment that would allow me a bit more control than most consumer grade stuff. I thought that would be a good place to start as it supports a lot of the things I’ll be doing down the road.\nHardware I went with all Ubiquiti gear for ease of use as far as pushing changes is concerned. I’ve got one control plane, and any changes are automatically applied to whatever device needs the changes applied.\nUbiquiti Dream Machine Pro Ubiquiti USW-24-POE Switch Ubiquiti U6+ Access Point Initial Install \u0026 Configuration I started by racking and booting the UDM Pro. The first boot takes a few minutes, and the front panel display shows the progress. I decided to configure the UDM offline, without using a Ubiquiti cloud account and not allowing remote access. I want to minimize any potential attack surface and not expose any services to WAN.\nI connected my laptop via Ethernet with a static IP in the expected range, but couldn’t access the GUI. After a bit of trial and error—including switching cables, ports, and DHCP settings, I realized the issue was an IP conflict with the VirtualBox adapters. Once that was resolved, I had local access and could get started with the configuration.\nTo complete the basic local setup:\nAssigned a local admin password Verified IP and connectivity Ran a speed test (645 Mbps down/up, not bad for coax!) Switch Setup Next, I powered up the USW-24-POE switch, connected it to the UDM, then adopted it in UniFi Network. UniFi Network runs on the UDM, there is no need for a standalone service in this case. I assigned the switch a static IP. Using custom length Ethernet cables crimped with T568B for consistency. I then configured a port on the switch to live on the management VLAN and connected my laptop to the switch and verified proper DHCP function.\nPort profiles were created to simplify future configuration:\nDisabled Port for unused ports Access ports for each VLAN Trunk port for Access Point (PoE + Management VLAN + required tagged VLANs) Firewall, VLANs \u0026 Security After the initial switch configuration, I focused on tightening security a bit:\nDisabled UPnP Verified WAN cannot access the management interface Enabled Intrusion Detection (IDS) via CyberSecure, starting with free ruleset (Notify mode) Created all of the VLANs to segment the LAN Default security posture set to Block All for new VLANs Created granular rules, e.g., “Laptop Comms” with selective Allow list access DHCP Reservations were assigned for key devices to simplify firewall rules and migration later.\nIGMP snooping was enabled to reduce unnecessary chatter on all VLANs with “Forward Unknown Multicast Traffic” set to drop, and “Fast Leave” enabled.\nAccess Point Setup The U6+ AP was mounted using the included template and long screws, with Ethernet run to a PoE port on the switch. I adopted the AP via UniFi Network and applied the Access Point port profile that I created earlier (Management VLAN, trunking only required VLANs).\nWi-Fi SSIDs, passwords, and security settings were cloned from the old network to ensure smooth device migration, with the SSIDs being associated with the proper VLANs.\nMigration I shut down the old network and brought the modem into the rack. A small hiccup with a bent coax pin led to a frantic run to the store for a replacement cable because of course it was near closing time on the weekend.\nAfter installing the new coax cable and still not receiving WAN, I tested the patch from the modem to the UDM with a known good cable. Despite the patch cable working before, that turned out to be the issue. After making a new Ethernet cable, the network gained WAN connectivity.\nOnce the new network was up, devices joined the new Wi-Fi without issue and automatically picked up their new IPs.\nMy NAS and my Raspberry Pi that runs some automations were a bit trickier to migrate. I had configured each endpoint to accept connections only from specific IPs which were on the old 192.168.x.y range. (I switched to 10.0.x.y for the new network because I hate typing 192.168.x.y repeatedly.) No fear though, I just created temporary migration VLANs on the UDM which used the old IP ranges. I gained access, removed the restrictions, then reassigned the switch ports to the new VLAN. After that, I could re-enable my restrictions and lock the endpoints down on the new IP ranges.\nIn TrueNAS, the restrictions were applied through the network settings in the GUI, on the Pi, I was using UFW. This was done to limit which endpoints on the network can talk to each of those endpoints and which ports are allowed to be used. In theory, the firewall rules should handle this if traffic is crossing VLAN boundaries, but why not have layers when these things are easy to implement?\nTips Try to do these things when stores are not about to close so you don’t need to scramble if you need to go buy parts. Set your default deny policy and lock things down early. Ubiquiti will default to an allow all posture for inter-VLAN comms. Ubiquiti’s feature to create port profiles makes things nice. Spending time up front to make port profiles for each VLAN makes things easy down the road, especially months later when you might forget what settings you used for a given port on the same VLAN. When you think your plan is perfect, things will still go sideways. Don’t rush, take breaks, give yourself plenty of time. ",
+  "wordCount" : "935",
+  "inLanguage": "en",
+  "datePublished": "2026-01-01T00:00:00Z",
+  "dateModified": "2026-01-01T00:00:00Z",
+  "author":{
+    "@type": "Person",
+    "name": "ScriptedVestige"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/infrastructure/network_backbone/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "ScriptedVestige",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="ScriptedVestige (Alt + H)">ScriptedVestige</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/infrastructure/" title="Infrastructure">
+                    <span>Infrastructure</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/services/" title="Services">
+                    <span>Services</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/data_analysis/" title="Data Analysis">
+                    <span>Data Analysis</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/troubleshooting/" title="Troubleshooting">
+                    <span>Troubleshooting</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <div class="breadcrumbs"><a href="http://localhost:1313/">Home</a>&nbsp;»&nbsp;<a href="http://localhost:1313/infrastructure/">Infrastructure</a></div>
+    <h1 class="post-title entry-hint-parent">
+      Network Backbone
+    </h1>
+    <div class="post-description">
+      Install and configuration of home lab networking gear.
+    </div>
+    <div class="post-meta"><span title='2026-01-01 00:00:00 +0000 UTC'>January 1, 2026</span>&nbsp;·&nbsp;<span>5 min</span>&nbsp;·&nbsp;<span>ScriptedVestige</span>
+
+</div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#hardware" aria-label="Hardware">Hardware</a></li>
+                <li>
+                    <a href="#initial-install--configuration" aria-label="Initial Install &amp; Configuration">Initial Install &amp; Configuration</a></li>
+                <li>
+                    <a href="#switch-setup" aria-label="Switch Setup">Switch Setup</a></li>
+                <li>
+                    <a href="#firewall-vlans--security" aria-label="Firewall, VLANs &amp; Security">Firewall, VLANs &amp; Security</a></li>
+                <li>
+                    <a href="#access-point-setup" aria-label="Access Point Setup">Access Point Setup</a></li>
+                <li>
+                    <a href="#migration" aria-label="Migration">Migration</a></li>
+                <li>
+                    <a href="#tips" aria-label="Tips">Tips</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><p>To start my home lab journey, I decided to rebuild my network from scratch with some equipment that would allow me a bit more control than most consumer grade stuff.  I thought that would be a good place to start as it supports a lot of the things I&rsquo;ll be doing down the road.</p>
+<h3 id="hardware">Hardware<a hidden class="anchor" aria-hidden="true" href="#hardware">#</a></h3>
+<p>I went with all Ubiquiti gear for ease of use as far as pushing changes is concerned.  I&rsquo;ve got one control plane, and any changes are automatically applied to whatever device needs the changes applied.</p>
+<ul>
+<li><strong>Ubiquiti Dream Machine Pro</strong></li>
+<li><strong>Ubiquiti USW-24-POE Switch</strong></li>
+<li><strong>Ubiquiti U6+ Access Point</strong></li>
+</ul>
+<h3 id="initial-install--configuration">Initial Install &amp; Configuration<a hidden class="anchor" aria-hidden="true" href="#initial-install--configuration">#</a></h3>
+<p>I started by racking and booting the UDM Pro. The first boot takes a few minutes, and the front panel display shows the progress. I decided to configure the UDM offline, without using a Ubiquiti cloud account and not allowing remote access.  I want to minimize any potential attack surface and not expose any services to WAN.</p>
+<p>I connected my laptop via Ethernet with a static IP in the expected range, but couldn’t access the GUI. After a bit of trial and error—including switching cables, ports, and DHCP settings, I realized the issue was an IP conflict with the VirtualBox adapters. Once that was resolved, I had local access and could get started with the configuration.</p>
+<p>To complete the basic local setup:</p>
+<ul>
+<li>Assigned a local admin password</li>
+<li>Verified IP and connectivity</li>
+<li>Ran a speed test (645 Mbps down/up, not bad for coax!)</li>
+</ul>
+<h3 id="switch-setup">Switch Setup<a hidden class="anchor" aria-hidden="true" href="#switch-setup">#</a></h3>
+<p>Next, I powered up the USW-24-POE switch, connected it to the UDM, then adopted it in UniFi Network.  UniFi Network runs on the UDM, there is no need for a standalone service in this case.  I assigned the switch a static IP. Using custom length Ethernet cables crimped with T568B for consistency.  I then configured a port on the switch to live on the management VLAN and connected my laptop to the switch and verified proper DHCP function.</p>
+<p>Port profiles were created to simplify future configuration:</p>
+<ul>
+<li>Disabled Port for unused ports</li>
+<li>Access ports for each VLAN</li>
+<li>Trunk port for Access Point (PoE + Management VLAN + required tagged VLANs)</li>
+</ul>
+<p><img alt="Ethernet Port Profiles" loading="lazy" src="/infrastructure/ethernet_port_profiles.png"></p>
+<h3 id="firewall-vlans--security">Firewall, VLANs &amp; Security<a hidden class="anchor" aria-hidden="true" href="#firewall-vlans--security">#</a></h3>
+<p>After the initial switch configuration, I focused on tightening security a bit:</p>
+<ul>
+<li>Disabled UPnP</li>
+<li>Verified WAN cannot access the management interface</li>
+<li>Enabled Intrusion Detection (IDS) via CyberSecure, starting with free ruleset (Notify mode)</li>
+<li>Created all of the VLANs to segment the LAN</li>
+<li>Default security posture set to Block All for new VLANs</li>
+<li>Created granular rules, e.g., “Laptop Comms” with selective Allow list access</li>
+</ul>
+<p><img alt="Current VLANs" loading="lazy" src="/infrastructure/current_vlans_20260311.png"></p>
+<p>DHCP Reservations were assigned for key devices to simplify firewall rules and migration later.</p>
+<p>IGMP snooping was enabled to reduce unnecessary chatter on all VLANs with “Forward Unknown Multicast Traffic” set to drop, and “Fast Leave” enabled.</p>
+<h3 id="access-point-setup">Access Point Setup<a hidden class="anchor" aria-hidden="true" href="#access-point-setup">#</a></h3>
+<p>The U6+ AP was mounted using the included template and long screws, with Ethernet run to a PoE port on the switch. I adopted the AP via UniFi Network and applied the Access Point port profile that I created earlier (Management VLAN, trunking only required VLANs).</p>
+<p>Wi-Fi SSIDs, passwords, and security settings were cloned from the old network to ensure smooth device migration, with the SSIDs being associated with the proper VLANs.</p>
+<h3 id="migration">Migration<a hidden class="anchor" aria-hidden="true" href="#migration">#</a></h3>
+<p>I shut down the old network and brought the modem into the rack. A small hiccup with a bent coax pin led to a frantic run to the store for a replacement cable <em>because of course it was near closing time on the weekend</em>.</p>
+<p>After installing the new coax cable and still not receiving WAN, I tested the patch from the modem to the UDM with a known good cable.  Despite the patch cable working before, that turned out to be the issue.  After making a new Ethernet cable, the network gained WAN connectivity.</p>
+<p>Once the new network was up, devices joined the new Wi-Fi without issue and automatically picked up their new IPs.</p>
+<p>My NAS and my Raspberry Pi that runs some automations were a bit trickier to migrate.  I had configured each endpoint to accept connections only from specific IPs which were on the old 192.168.x.y range.  (I switched to 10.0.x.y for the new network because I hate typing 192.168.x.y repeatedly.)  No fear though, I just created temporary migration VLANs on the UDM which used the old IP ranges.  I gained access, removed the restrictions, then reassigned the switch ports to the new VLAN.  After that, I could re-enable my restrictions and lock the endpoints down on the new IP ranges.</p>
+<p>In TrueNAS, the restrictions were applied through the network settings in the GUI, on the Pi, I was using UFW.  This was done to limit which endpoints on the network can talk to each of those endpoints and which ports are allowed to be used.  In theory, the firewall rules should handle this if traffic is crossing VLAN boundaries, but why not have layers when these things are easy to implement?</p>
+<h3 id="tips">Tips<a hidden class="anchor" aria-hidden="true" href="#tips">#</a></h3>
+<ul>
+<li>Try to do these things when stores are <em>not</em> about to close so you don&rsquo;t need to scramble if you need to go buy parts.</li>
+<li>Set your default deny policy and lock things down early.  Ubiquiti will default to an allow all posture for inter-VLAN comms.</li>
+<li>Ubiquiti&rsquo;s feature to create port profiles makes things nice.  Spending time up front to make port profiles for each VLAN makes things easy down the road, especially months later when you might forget what settings you used for a given port on the same VLAN.</li>
+<li>When you think your plan is perfect, things will still go sideways.  Don&rsquo;t rush, take breaks, give yourself plenty of time.</li>
+</ul>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/network/">Network</a></li>
+      <li><a href="http://localhost:1313/tags/ubiquiti/">Ubiquiti</a></li>
+      <li><a href="http://localhost:1313/tags/vlans/">Vlans</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/infrastructure/truenas_resurrection/">
+    <span class="title">« Prev</span>
+    <br>
+    <span>TrueNAS Resurrection</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">ScriptedVestige</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

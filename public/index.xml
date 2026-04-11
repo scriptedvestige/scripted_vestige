@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Home on ScriptedVestige</title>
+    <link>http://localhost:1313/</link>
+    <description>Recent content in Home on ScriptedVestige</description>
+    <generator>Hugo -- 0.157.0</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 11 Apr 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Initial Data Analysis</title>
+      <link>http://localhost:1313/data_analysis/initial_analysis/</link>
+      <pubDate>Sat, 11 Apr 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/data_analysis/initial_analysis/</guid>
+      <description>Pull the signal from the noise.</description>
+    </item>
+    <item>
+      <title>Network Outage</title>
+      <link>http://localhost:1313/troubleshooting/network_outage_20260301/</link>
+      <pubDate>Sun, 01 Mar 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/troubleshooting/network_outage_20260301/</guid>
+      <description>Never trust SD cards.</description>
+    </item>
+    <item>
+      <title>Unplanned Outage Troubleshooting</title>
+      <link>http://localhost:1313/troubleshooting/outage_20260224/</link>
+      <pubDate>Tue, 24 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/troubleshooting/outage_20260224/</guid>
+      <description>Sometimes other people break things, it&amp;#39;s not always my fault!</description>
+    </item>
+    <item>
+      <title>Manual Event Logging</title>
+      <link>http://localhost:1313/services/manual_events/</link>
+      <pubDate>Sat, 14 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/services/manual_events/</guid>
+      <description>Logging things my sensors can&amp;#39;t.</description>
+    </item>
+    <item>
+      <title>Grafana</title>
+      <link>http://localhost:1313/services/grafana/</link>
+      <pubDate>Sat, 07 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/services/grafana/</guid>
+      <description>Visualize all of the data!</description>
+    </item>
+    <item>
+      <title>Weather Station Deployment</title>
+      <link>http://localhost:1313/infrastructure/weather_station/</link>
+      <pubDate>Sat, 31 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/infrastructure/weather_station/</guid>
+      <description>Deploying the weather station and building service to ingest data to the database.</description>
+    </item>
+    <item>
+      <title>Portainer &amp; TimescaleDB</title>
+      <link>http://localhost:1313/services/timescaledb/</link>
+      <pubDate>Fri, 09 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/services/timescaledb/</guid>
+      <description>Setting up my database.</description>
+    </item>
+    <item>
+      <title>TrueNAS Configuration</title>
+      <link>http://localhost:1313/infrastructure/truenas_config/</link>
+      <pubDate>Fri, 09 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/infrastructure/truenas_config/</guid>
+      <description>Configuration of datasets within the storage pool.</description>
+    </item>
+    <item>
+      <title>Daily Briefing</title>
+      <link>http://localhost:1313/services/daily_briefing/</link>
+      <pubDate>Sat, 03 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/services/daily_briefing/</guid>
+      <description>An automation to make life easier.</description>
+    </item>
+    <item>
+      <title>TrueNAS Resurrection</title>
+      <link>http://localhost:1313/infrastructure/truenas_resurrection/</link>
+      <pubDate>Fri, 02 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/infrastructure/truenas_resurrection/</guid>
+      <description>Rebuild of custom box running TrueNAS SCALE for data storage and virtualization.</description>
+    </item>
+    <item>
+      <title>Network Backbone</title>
+      <link>http://localhost:1313/infrastructure/network_backbone/</link>
+      <pubDate>Thu, 01 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/infrastructure/network_backbone/</guid>
+      <description>Install and configuration of home lab networking gear.</description>
+    </item>
+  </channel>
+</rss>
