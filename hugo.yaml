@@ -31,7 +31,7 @@ params:
   homeInfoParams:
     Title: "Welcome to ScriptedVestige!"
     Content: >
-      I'm an IT guy documenting my home lab which covers networking, infrastructure, automation, and everything in between.  This is a living record of things I've built, broken, and fixed.  Right now, I'm working on building a data-driven, machine learning powered irrigation system.<br><br>
+      I'm an IT guy documenting my home lab which covers networking, infrastructure, automation, and everything in between.  This is a living record of things I've built, broken, and fixed.  Right now, I'm working on building a data-driven, machine learning powered irrigation system.  I've still got a long way to go, but it's been interesting to get to this point.<br><br>
       Have a question or want to get in touch?  Reach me at [contact@scriptedvestige.com](mailto:contact@scriptedvestige.com)!
 
   socialIcons:
