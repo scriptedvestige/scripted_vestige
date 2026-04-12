@@ -4,7 +4,7 @@ date: 2026-01-31
 draft: false
 description: Deploying the weather station and building service to ingest data to the database.
 tags:
-  - timescale
+  - timescaledb
   - python
   - cron
   - ecowitt

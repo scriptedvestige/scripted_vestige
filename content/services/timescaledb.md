@@ -6,7 +6,7 @@ description: Setting up my database.
 tags:
   - TrueNAS
   - data
-  - timescale
+  - timescaledb
   - portainer
   - bash
   - cron

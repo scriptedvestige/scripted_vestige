@@ -16,7 +16,7 @@ searchHidden: "false"
 ---
 Having a lot of data collected can be a good thing, but it's important to be able to pull the signal from the noise to be able to act upon the data.  What's the point in collecting all of this data if I'm not going to use it?  I'm going to create some materialized views in Timescale that I can query with Grafana that will show me useful data that I can act on.
 
-### Aggregates of Observed Data
+### Observation Aggregates
 I initially started with pulling raw weather station readings from my five minute intervals into Grafana and displaying them with time series graphs.  This was useful, but I decided that I wanted to create some aggregates so I wasn't pulling so much raw data and my Grafana dashboards would be quick and snappy.
 
 I decided to make multiple continuous aggregate materialized views for each table in my database.  I created views for hourly, daily, weekly, monthly, and yearly periods, then created Grafana dashboards for them.  Here's the query I used to create the daily view, the pattern is the same for all other periods, with the difference being changing the bucket size:

@@ -5,7 +5,7 @@ draft: false
 description: Logging things my sensors can't.
 tags:
   - grafana
-  - timescale
+  - timescaledb
   - fastapi
 categories:
   - Services
