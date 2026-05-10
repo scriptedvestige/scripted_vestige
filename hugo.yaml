@@ -2,8 +2,8 @@ baseURL: "https://scriptedvestige.com"
 languageCode: "en-us"
 title: "ScriptedVestige"
 theme: "PaperMod"
-[pagination]
-  pagerSize = 10
+pagination:
+  pagerSize: 10
 
 enableRobotsTXT: true
 buildDrafts: false
