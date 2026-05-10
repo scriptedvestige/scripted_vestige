@@ -12,6 +12,8 @@ showToc: "true"
 comments: "false"
 searchHidden: "false"
 ---
+Check out this project on my [GitHub!](https://github.com/scriptedvestige/daily_briefing)
+
 This project started with wanting a way to keep up with cybersecurity news.  I started the project with a simple, hard-coded script that let me scrape the RSS feed of one news source.  I got distracted with other things and came back to this project months later, but I didn't forget about the project.  While I was busy with other things, I had ideas to make this project better, and I've implemented those.
 
 This project will likely never actually be complete, but it's at a good spot where it's stable and has been doing what I designed it to do and is making my life easier.
@@ -44,8 +46,6 @@ Once the weekly schedule is created on Sunday, it is sent as an additional email
 Each workday, the wardrobe generator pulls the build for that day and double checks whether the items selected are still appropriate for the most current forecast.  If any of the items are deemed inappropriate for the updated forecast, a copy of the inventory is made, and items from all other days are removed from the inventory before picking new item(s) for the current day.  Once the build for the day is confirmed, the data is formatted as an HTML string and returned to the orchestrator.
 
 This module only runs in the morning and returns none for the midday run.  The midday HTML template does not contain a wardrobe section anyway.
-
-The wardrobe logic is all here if you want to check it out on my [GitHub!](https://github.com/scriptedvestige/daily_briefing)
 
 ### Cybersecurity News Module
 This module grabs RSS feed URLs from its configuration file and uses the FeedParser package to pull the news data.  The time period checked is midnight of the day prior to current time, a 48 hour period.  Doing this minimizes any missed articles.  The articles are checked to see if they contain any of the keywords from the list in the config file.  If keywords are found, the title is checked to see if it has already been sent in the previous 48 hours.  Only after passing those checks is the article saved to the day's JSON file.  The title, description, and link of all articles are formatted as an HTML string and returned to the orchestrator.

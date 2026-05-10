@@ -39,6 +39,8 @@ I don't have my ingest script written yet because I wasn't sure if the console w
 Once all of that is done, I'll join the weather station sensor array to the console and install it out in the yard.  For now, I'll be using a temporary location and in the spring I'll get a big post to put in the permanent location that will hold the weather station and lightning strike detector.
 
 ### The API
+I've dropped the code in a repo on [GitHub](https://github.com/scriptedvestige/ws_ingest.git)
+
 Now I'll hop into VSCode and set up a basic API for the Ecowitt console to push to.  I'm going to use FastAPI with uvicorn to catch the data.  Once the basic structure is set up, I'll send it over to the Pi.  I'll set the script to run as a service on my Pi so the API endpoint is available 24/7.
 
 ![Ecowitt Service Config](/services/ecowitt_service_config.png)

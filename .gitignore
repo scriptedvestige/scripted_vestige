@@ -1,0 +1,16 @@
+# Hugo output folder
+# /public/
+
+# Generated resources
+/resources/_gen/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# IDE/Editor files
+*.vscode/
+*.idea/

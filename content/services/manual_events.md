@@ -15,6 +15,8 @@ searchHidden: "false"
 ---
 There is a lot of data that I want to collect that my sensors can't.  With automation and machine learning application being the goal, I want to gather as much data as I possibly can to really create a complete picture of events in the yard.  Snow events are one example of that, so that's where I started.
 
+[Check out the repo on GitHub](https://github.com/scriptedvestige/manual_events.git)
+
 I again used Python, FastAPI, and uvicorn to define some API endpoints on the same Pi that runs my Ecowitt ingest API.  Just like the Ecowitt ingest, I'll make this API a service also.  The difference with this one though is that when the endpoint is requested in the browser, an HTML form is presented.
 
 ![Field Observations Service](/services/field_observations_service.png)
