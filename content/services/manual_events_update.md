@@ -45,7 +45,7 @@ notes TEXT
 ```
 
 And here's what the form looks like:
-![Fertilizer Log](/static/services/fertilizer_form.png)
+![Fertilizer Log](/services/fertilizer_form.png)
 
 In time, I'll make a similar endpoint to log soil pH, so I can track changes in pH over time based on fertilizer application and be able to tailor fertilizer application to address potential soil pH imbalances.
 ### Disease & Pest Treatments
@@ -65,7 +65,7 @@ notes TEXT
 );
 ```
 After that, I modified the app.py for GET and POST, then created my HTML form.  Now I realized that when doing this or fertilizing, it would be very annoying to have to make individual entries for each zone.  The solution was to create checkboxes for the zones, then make the zones a list.  Loop through the list and insert a row into the table with identical data for each zone selected.  I also went back and modified the fertilizer logger to function in the same manner.  Here's what the form looks like:
-![Treatment Form](/static/services/treatment_form.png)
+![Treatment Form](/services/treatment_form.png)
 ### Grafana
 As always, I need to visualize my data with dashboards in Grafana.  I'm doing this so if I'm logging events with the forms from the yard on my phone, I don't have to go inside to check the database directly with the laptop.  I can submit my data via the form and see it appear instantly on Grafana.
 
@@ -83,6 +83,6 @@ application_method as "Application"
 FROM manual.treatment_events ORDER BY treated_at DESC LIMIT 20;
 ```
 That query gives me the following table:
-![Treatment Table](/static/services/grafana_treatment_table.png)
+![Treatment Table](/services/grafana_treatment_table.png)
 ### Conclusion (For Now)
 This process is pretty straightforward once you get the framework in place.  It's just copying and modifying what already exists to suit a different purpose.  I have more manual event logging tables that I want to set up for things like pruning, irrigation maintenance, soil pH, or whatever else I think of down the road but those aren't necessary yet.  This pipeline though is proving to be useful and pretty flexible.  It's going to give me additional data and context that my sensors can't detect and log.
