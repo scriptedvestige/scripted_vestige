@@ -1,7 +1,7 @@
 ---
 title: Expanding the Manual Event Logger
 date: 2026-05-09
-draft: true
+draft: false
 description: Collecting more data.
 tags:
   - data
