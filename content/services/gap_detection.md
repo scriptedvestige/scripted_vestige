@@ -136,7 +136,7 @@ One issue with this setup is that the entries will only appear in the respective
 This is a lot more simple than all of the above.  In Grafana, I simply made panels on my Gap Detection dashboard that query the last updated time for both the home and work forecasts.  If those times are not what is expected, then I know a failure occurred and to check my logs to see what happened.
 
 The whole dashboard winds up looking like this:
-![Grafana Gap Detection](/services/gap_detection.png)
+![Grafana Gap Detection](/services/grafana_gap_detection.png)
 
 ### Going Forward
 I'll also create a watchdog script that checks that the date and time of the most recent entries in the database are within the last 10 minutes, and if the data is stale, restart the Ecowitt ingest service.  This will allow me to detect gaps live instead of waiting until whatever issue was resolved.  It will also give a bit of resilience and potential to self correct quickly without needing me to intervene.  I plan on using a private Matrix server and Tailscale to send alerts for my wildfire alert system, so I might use that existing infrastructure to have another bot to send gap detection alerts as well.
