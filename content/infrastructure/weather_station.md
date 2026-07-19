@@ -10,7 +10,8 @@ tags:
   - ecowitt
   - fastapi
 categories:
-  - data
+  - Infrastructure
+  - Services
 showToc: "true"
 comments: "false"
 searchHidden: "false"

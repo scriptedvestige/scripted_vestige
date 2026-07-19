@@ -10,6 +10,7 @@ tags:
   - fastapi
   - data
 categories:
+  - Infrastructure
   - Services
 showToc: "true"
 comments: "false"

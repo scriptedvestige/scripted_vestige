@@ -12,7 +12,7 @@ tags:
   - cron
   - python
 categories:
-  - Infrastructure
+  - Services
 showToc: "true"
 comments: "false"
 searchHidden: "false"
